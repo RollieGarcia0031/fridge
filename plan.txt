@@ -1,0 +1,31 @@
+Main features:
+
+    * takes user input
+        ** required
+            - ingredients
+        ** optional
+            - type - [soup, stir-fried]
+            - nutrient priority - [muscle, bone, sick]
+            - can suggest more ingredients - [ true | false ]
+
+        ** bonus:
+            - autocomplete typing ingredients
+            - indicate if ingredient is already taken as input
+            - input modes:
+                * fridge mode
+                    - allows user to input multiple foods at the same time
+                * market mode
+                    - allows AI to give suggestion in real time, as the user adds ingredients in the cart
+
+    * generate a list of random dish
+        ** options:
+            - instant generation
+            - show lists of suggestion
+
+    * list down the instruction
+        ** optional:
+            - provide recommended tutorial
+
+Minor feats:
+    * customize "fridge" inventory
+    * create preset of fridge inventory
