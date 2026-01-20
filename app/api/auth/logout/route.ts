@@ -1,6 +1,9 @@
-export default function GET(){
-    
-    return new Response(null, {
-        status: 200
-    })
+// app/api/auth/logout/route.ts
+import { NextResponse } from 'next/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+
+export async function POST() {
+  const supabase = await createSupabaseServerClient()
+  await supabase.auth.signOut()
+  return NextResponse.json({ success: true })
 }
