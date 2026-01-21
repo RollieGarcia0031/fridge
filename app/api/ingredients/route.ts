@@ -11,11 +11,20 @@ import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
  *   }
  * ]
  */
-export async function GET() {
-  const { data, error } = await supabase
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const search = searchParams.get("search")?.toLowerCase()
+
+  let query = supabase
     .from("ingredients")
     .select("id, name, category")
     .order("name", { ascending: true })
+
+  if (search) {
+    query = query.ilike("normalized_name", `%${search}%`)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     return NextResponse.json(
@@ -26,6 +35,7 @@ export async function GET() {
 
   return NextResponse.json({ ingredients: data })
 }
+
 
 /**
  * add ingredient's to user's inventory
