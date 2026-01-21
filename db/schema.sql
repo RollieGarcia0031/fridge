@@ -44,3 +44,16 @@ on public.user_ingredients
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
+
+create or replace function update_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger trigger_user_ingredients_updated_at
+before update on public.user_ingredients
+for each row
+execute function update_updated_at();
