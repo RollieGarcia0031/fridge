@@ -10,6 +10,12 @@ import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
  *    category: protein
  *   }
  * ]
+ * 
+ * Example usage:
+ * 
+ * const res = await fetch(`/api/ingredients?search=${query}`)
+ * 
+ * const { ingredients } = await res.json()
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
