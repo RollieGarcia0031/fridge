@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev_ai":"genkit start -- npx tsx --watch ./lib/ai-flow/index.ts"
   },
   "dependencies": {
+    "@genkit-ai/google-genai": "^1.27.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
+    "genkit": "^1.27.0",
     "next": "16.1.3",
     "react": "19.2.3",
     "react-dom": "19.2.3"
