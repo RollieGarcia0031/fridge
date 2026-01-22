@@ -1,1 +1,2 @@
+import './getFullRecipe';
 import './generateRecipe';

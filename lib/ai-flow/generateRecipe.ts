@@ -1,14 +1,6 @@
 import { googleAI } from "@genkit-ai/google-genai";
 import { genkit, z } from "genkit";
-
-const ai = genkit({
-  plugins: [googleAI({
-    apiKey: process.env.GEMINI_API_KEY
-  })],
-  model: googleAI.model('gemini-2.5-flash', {
-    temperature: 0.8
-  })
-});
+import { ai } from "./genkit";
 
 const inputSchema = z.object({
   ingredients: z.array(z.string()).describe("The available ingredients to cook a meal")
