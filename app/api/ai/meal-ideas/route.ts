@@ -8,24 +8,26 @@ export async function POST(req: Request){
 
   try {
     // auth middleware
-    const auth = req.headers.get('authorization');  
+    const auth = req.headers.get('Authorization');  
     if (!auth)
-      throw new NextResponse(null, {status: 401});
+      return new NextResponse(null, {status: 401});
 
-    const token = auth.replace('Bearer','');
+    const token = auth.replace('Bearer ','');
     const { data, error } = await (await supabase()).auth.getUser(token);
-  
+
     if (error || !data.user)
       return new NextResponse(null,{status: 401});
   
-    const ingredients = getUserRecipes(data.user.id);
+    const ingredients = await getUserRecipes(data.user.id);
 
-    return new NextResponse(JSON.stringify(ingredients), {
+    const result = await generateRecipeFlow({ingredients});
+
+    return new NextResponse(JSON.stringify(result),{
       status: 200
     })
 
-  } catch {
-
+  } catch (e){
+    console.log(e);
     return new NextResponse(
       JSON.stringify({error: "Unknown error has occured!"}), {
       status: 500
