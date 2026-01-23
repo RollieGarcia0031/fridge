@@ -8,16 +8,40 @@ const inputSchema = z.object({
 }).describe("generated recipe from the given ingredients");
 
 const outputSchema = z.object({
-  preparation: z.string().describe("tips and suggestion to prepare the ingredients before cooking the dish"),
-  full_recipe: z.string().describe("step by step process on how to cook the dish")
+  name: z.string(),
+  servings: z.number(),
+  cook_time_minutes: z.number(),
+  ingredients: z.array(
+    z.object({
+      name: z.string(),
+      quantity: z.string().optional()
+    })
+  ),
+  steps: z.array(
+    z.object({
+      order: z.number(),
+      title: z.string(),
+      instruction: z.string()
+    })
+  ),
+  tips: z.array(z.string()),
+  warnings: z.array(z.string()).optional()
 });
+
 
 export const getFullRecipeFlow = ai.defineFlow({
   name: 'getFullRecipeFlow',
   inputSchema,
   outputSchema,
 }, async (input)=>{
-  const prompt = `${input.recipe_name}`;
+  const prompt = `
+    You are a JSON API.
+
+      Generate cooking intruction for ${input.recipe_name} using ONLY the given ingredients.
+
+      Ingredients:
+      ${input.ingredients.join(", ")}
+    `;
 
   const { output } = await ai.generate({
     prompt,
