@@ -142,6 +142,6 @@ export  function PUT(){
  *
  * Request:{ id: uuid }
  */
-export function DELETE(){
-  return NextResponse.json({});
+export async function DELETE(req: Request){
+
 }
