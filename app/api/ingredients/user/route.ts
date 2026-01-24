@@ -38,6 +38,96 @@ export async function GET(req: Request){
   }
 }
 
+/**
+ * add ingredient's to user's inventory
+ *
+ * Request:
+ * {
+ *    id: uuid // primary key of the ingredient in ingredients table
+ * }
+ */
+export async function POST(req: Request) {
+  // 1. Auth
+  const authHeader = req.headers.get("authorization");
+
+  if (!authHeader) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = authHeader.replace("Bearer ", "")
+  const { data: { user }, error: authError } = await (await supabase()).auth.getUser(token);
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // 2. Parse body
+  const body = await req.json();
+  const { ingredient_id } = body;
+
+  if (!ingredient_id || typeof ingredient_id !== "string") {
+    return NextResponse.json(
+      { error: "ingredient_id is required" },
+      { status: 400 }
+    )
+  }
+
+  // 3. Validate ingredient exists
+  const { data: ingredient, error: ingredientError } = await (await supabase())
+    .from("ingredients")
+    .select("id, name, category")
+    .eq("id", ingredient_id)
+    .single();
+
+  if (ingredientError || !ingredient) {
+    return NextResponse.json(
+      { error: "Invalid ingredient_id" },
+      { status: 400 }
+    )
+  }
+
+  // 4. Insert into user_ingredients
+  const { data: userIngredient, error } = await (await supabase())
+    .from("user_ingredients")
+    .upsert(
+      {
+        user_id: user.id,
+        ingredient_id: ingredient.id
+      },
+      {
+        onConflict: "user_id,ingredient_id"
+      }
+    )
+    .select(`
+      id,
+      created_at,
+      ingredient:ingredients (
+        id,
+        name,
+        category
+      )
+    `)
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // 5. Return result
+  return NextResponse.json(
+    { ingredient: userIngredient },
+    { status: 201 }
+  )
+}
+
+/**
+ * remove ingredient from user's inventory
+ * 
+ * Request:
+ * {
+ *    id: uuid // the primary id of user_ingredient to be removed 
+ * }
+ */
 export async function DELETE(req: Request){
 
   try {
