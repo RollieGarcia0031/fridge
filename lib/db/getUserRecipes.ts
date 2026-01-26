@@ -1,5 +1,8 @@
 import { createSupabaseServerClient as supabase } from "../supabase/server";
 
+/**
+ * Takes a list of ingredients owned by a specific user
+ */
 export default async function getUserRecipes(userId: string){
 
     const db = await (await supabase())
