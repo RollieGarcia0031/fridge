@@ -28,7 +28,11 @@ const outputSchema = z.object({
   warnings: z.array(z.string()).optional()
 });
 
-
+/**
+ * Generates a complete step by step process on how to cook a dish
+ * based on a given array of ingredients, and a name of dish
+ * to be cooked
+ */
 export const getFullRecipeFlow = ai.defineFlow({
   name: 'getFullRecipeFlow',
   inputSchema,

@@ -13,6 +13,10 @@ const outputSchema = z.array(z.object({
   }).describe("generated recipe from the given ingredients")
 );
 
+/**
+ * Generates a list of recommended recipes based
+ * on a given input of available ingredients
+ */
 export const generateRecipeFlow = ai.defineFlow(
   {
     name: 'generateRecipeFlow',
