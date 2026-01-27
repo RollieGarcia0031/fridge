@@ -9,7 +9,7 @@ export default function SignUp(){
     <div className="card-screen">
       <form onSubmit={e=>handleSubmit(e)} className="flex-cc">
         <h1>Create A new Account</h1>
-        <fieldset className="flex-ccl gap-4">
+        <fieldset className="flex-ccl gap-4 mt-8">
             <label>
               Email: <br/>
               <input type="email" name="email" required />
@@ -20,8 +20,8 @@ export default function SignUp(){
             </label>
         </fieldset>
 
-        <div className="flex-cc gap-2 mt-4">
-          <button type="submit" className="bg-primary text-black px-2 py-1 rounded-md">
+        <div className="flex-cc gap-2 mt-8 w-full">
+          <button type="submit" className="w-full btn-primary px-2 py-1 rounded-md">
             Create Account
           </button>
           <Link href="/auth/login">Log in instead</Link>

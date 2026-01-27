@@ -22,7 +22,7 @@
   --font-mono: var(--font-geist-mono);
 
   --color-bg-dark: var(--bg-dark);
-  --color-bg: var(--bg);
+  --color-background: var(--bg);
   --color-bg-light: var(--bg-light);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
@@ -56,15 +56,37 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg);
+  color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
-
+  .card-screen {
+    @apply min-h-dvh flex items-center justify-center;
+  }
+  .flex-ccl {
+    @apply flex flex-col items-start justify-center;
+  }
+  .flex-cc {
+    @apply flex flex-col items-center justify-center;
+  }
+  .btn-primary {
+    @apply bg-primary text-black py-1 px-2 rounded-md border-border;
+  }
 }
 
 @layer base {
-  
+  input[type="text"], input[type="email"], input[type="password"] {
+    @apply border-border border-2 border-solid rounded-md px-2
+    focus:outline-none;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+
+  h1 {
+    @apply text-xl;
+  }
 }

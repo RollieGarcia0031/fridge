@@ -11,7 +11,7 @@ export default function Login(){
     <div className="card-screen">
       <main>
         <form onSubmit={e=>handleSubmit(e)}>
-          <h1 className="text-lg text-center my-8">
+          <h1 className="text-center my-8">
             Log in to your account
           </h1>
           <fieldset className="flex-ccl gap-1">
@@ -23,7 +23,7 @@ export default function Login(){
           </fieldset>
           
           <div className="flex-cc mt-8 gap-4">
-            <button type="submit" className="bg-primary text-black py-1 px-2 rounded-md w-full mx-2">
+            <button type="submit" className="btn-primary py-1 px-2 rounded-md w-full mx-2">
               Log in
             </button>
 
