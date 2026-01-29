@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
+import { redirect } from 'next/navigation'
 
 export async function requireAuth() {
   const cookieStore = cookies()
@@ -17,9 +17,7 @@ export async function requireAuth() {
     }
   )
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) redirect('/login')
 
