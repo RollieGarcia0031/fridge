@@ -1,8 +1,10 @@
 "use client";
 
 import { supabase } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
+import { VscDebugContinue } from "react-icons/vsc";
+import SuggestedDialog from "./components/SuggestedDialog";
 
 interface Ingredient {
   category: string;
@@ -25,10 +27,22 @@ export default function Home() {
 
   // selected ingredient from UI to add to inventory
   const [selectedIngredientId, setSelectedIngredientId] = useState<string>("");
-  
+
+  // suggestion dialog
+  const suggestionDialogRef = useRef<HTMLDialogElement | null>(null);
+
+  // state for recipe suggestions
+  const [suggestedRecipes, setSuggestedRecipes] = useState<Recipe[]>([]);
+
   async function fetchOwnedIngredients(){
     const data = await getOwnedIngredients();
     setOwnedIngredients(data);
+  }
+
+  async function fetchRecommendedRecipes(){
+    const data = await getRecommendedRecipes();
+    setSuggestedRecipes(data!);
+    console.log(data);
   }
 
   useEffect(()=>{
@@ -42,6 +56,7 @@ export default function Home() {
   },[]);
 
   return (
+    <>
     <div className="card-screen">
       <div>
         
@@ -58,16 +73,36 @@ export default function Home() {
           </select>
         </div>
 
-        <button
-          onClick={e=>addIngredient()}
-          className="mt-4 bg-bg-light border-border border border-solid w-[20rem]
-          py-2 px-4 rounded-sm hover:bg-highlight duration-150">
-          Add
-        </button>
+        <div className="mt-4 gap-2 flex flex-row justify-center items-center">
+          <button
+            onClick={e=>addIngredient()}
+            className="bg-bg-light border-border border border-solid w-[20rem]
+            py-2 px-4 rounded-sm hover:bg-highlight duration-150">
+            Add
+          </button>
 
-        <OwnedIngredientsPane setOwnedIngredients={setOwnedIngredients} ownedIngredients={ownedIngredients}/>
+          <button
+            onClick={()=>openSuggestedIngredients()}
+            className="bg-primary p-2 rounded-xl hover:bg-secondary duration-150"
+          >
+            <VscDebugContinue className="dark:fill-black text-2xl"/>
+          </button>
+        </div>
+
+        <OwnedIngredientsPane
+          setOwnedIngredients={setOwnedIngredients}
+          ownedIngredients={ownedIngredients}
+        />
       </div>
     </div>
+    
+    <SuggestedDialog
+      ref={suggestionDialogRef}
+      setSuggestedRecipes={setSuggestedRecipes}
+      suggestedRecipes={suggestedRecipes}
+      fetchRecommendedRecipes={fetchRecommendedRecipes}
+    />
+    </>
   );
 
   async function addIngredient(){
@@ -95,6 +130,11 @@ export default function Home() {
     } catch (error){
       console.log(error);
     }
+  }
+
+  function openSuggestedIngredients(){
+    suggestionDialogRef.current?.showModal();
+    fetchRecommendedRecipes();
   }
 }
 
@@ -177,4 +217,27 @@ async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
   const data = await res.json();
   console.log(data.recipes);
   return data.recipes;
+}
+
+async function getRecommendedRecipes(){
+
+  const refreshToken = await supabase.auth.getSession();
+
+  try{
+    const res = await fetch("/api/ai/meal-ideas",{
+      method:"POST",
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
+      }
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const data = await res.json();
+
+    return data;
+  } catch (error){
+    console.log(error);
+  }
 }

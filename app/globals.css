@@ -100,4 +100,15 @@ body {
   h1 {
     @apply text-xl;
   }
+
+  dialog:open {
+    @apply block fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+      bg-background border-border border border-solid rounded-md px-2 py-1
+      focus:outline-none backdrop-blur-3xl backdrop-brightness-200
+      shadow-2xl shadow-black/50;
+  }
+
+  dialog:not([open]) {
+    @apply hidden;
+  }
 }
