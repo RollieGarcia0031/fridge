@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
-import SuggestedDialog from "./components/SuggestedDialog";
+import SuggestedDialog from "@/components/SuggestedDialog";
 
 interface Ingredient {
   category: string;
