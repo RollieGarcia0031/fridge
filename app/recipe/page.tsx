@@ -32,7 +32,6 @@ export default function Recipe() {
     const recipe = sessionRecipe ? JSON.parse(sessionRecipe) : null;
 
     recipeRef.current = recipe;
-    console.log('updated recipe');
     if (!recipe) {
       router.push("/");
     }
@@ -40,32 +39,72 @@ export default function Recipe() {
 
   useEffect(()=>{
     refreshInstructions();
-    console.log(instructionRef.current);
   }, [recipeRef])
 
 
+  // ! IMPORTANT FIX ME
+  // TODO : fix bug, instruction doesn't load upon updating instructionsref, it only loads
+  // TODO : when manually updating the page then allowing hmr to auto refresh
   return (
     <div>
-      <h1>Recipe</h1>
 
       {loadingRef.current && <p>Loading...</p>}
 
-      {instructionRef.current && <InstructionPanel instructions={instructionRef.current} />}
+      {instructionRef.current && <InstructionPanel instructionsRef={instructionRef} />}
 
     </div>
   );
 }
 
-function InstructionPanel({instructions}:{instructions: Instrcutions}){
+function InstructionPanel({instructionsRef}:{
+  instructionsRef: React.RefObject<Instrcutions | null>
+}){
+
+  useEffect(()=>{
+    console.log('rendering instruction panel');
+    console.log(instructionsRef.current);
+  }, [instructionsRef]);
+
+  const instructions = instructionsRef.current;
+
+  if (!instructions) return <p>Loading...</p>;
+
   return (
-    <div>
+    <div className="card w-200">
       <p className="text-lg">
         {instructions.name}
       </p>
 
-      <p className="text-sm">
-        {instructions.cook_time_minutes} Minutes
+      <p className="text-sm space-x-4">
+        <span>
+          {instructions.cook_time_minutes} Minutes
+        </span>
+
+        <span>
+          {instructions.servings} Servings
+        </span>
       </p>
+
+
+      <div className="mt-4">
+        <p className="my-2 font-semibold">
+          Instructions
+        </p>
+
+        <div className="space-y-4">
+          {instructions.steps.map((step) => (
+            <div key={step.order}>
+              <p className="text-sm">
+                {step.order}. {step.title}
+              </p>
+              <p className="text-sm text-text-muted">
+                {step.instruction}
+              </p>
+            </div>
+          ))}
+        </div>
+
+      </div>
     </div>
   )
 }
