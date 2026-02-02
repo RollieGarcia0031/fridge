@@ -51,10 +51,6 @@ export default function Recipe() {
 
 
 function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
-  useEffect(() => {
-    console.log("rendering instruction panel");
-    console.log(instructions);
-  }, [instructions]);
 
   if (!instructions) return <p>Loading...</p>;
 
@@ -103,8 +99,6 @@ async function fetchInstruction(recipe: Recipe): Promise<Instrcutions> {
   });
 
   const data = await response.json();
-
-  console.log(data);
 
   return data;
 }
