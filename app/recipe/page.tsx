@@ -7,10 +7,16 @@ import { supabase } from "@/lib/supabase/client";
 export default function Recipe() {
   const router = useRouter();
 
+  // state for list of retrieved recipe of logged user
   const [recipe, setRecipe] = useState<Recipe | null>(null);
+  // state for fetched instruction by ai-flow
   const [instructions, setInstructions] = useState<Instrcutions | null>(null);
+  // loading state for screen updates
   const [loading, setLoading] = useState(false); 
 
+  /**
+   * reloads the instructions from AI
+   */
   async function refreshInstructions() {
     try {
       setLoading(true);
@@ -26,6 +32,9 @@ export default function Recipe() {
   }
 
   useEffect(() => {
+    // obtain recipe from session storage
+    // it is assumed that before the user opens this page, the user
+    // must have selected a meal from the dialog box in dashboard
     const sessionRecipe = sessionStorage.getItem("recipe");
     const parsedRecipe = sessionRecipe ? JSON.parse(sessionRecipe) : null;
 
@@ -40,6 +49,7 @@ export default function Recipe() {
       refreshInstructions();
     }
   }, [recipe]);
+
   return (
     <div>
       {loading && <p>Loading...</p>}
@@ -82,6 +92,11 @@ function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
   );
 }
 
+/**
+ * Fetch the instruction from AI-model
+ *
+ * @param recipe - saved recipe in the sessionStorage, that is assumed to be selected by the user
+ */
 async function fetchInstruction(recipe: Recipe): Promise<Instrcutions> {
   const refreshToken = await supabase.auth.getSession();
 

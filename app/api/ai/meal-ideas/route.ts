@@ -3,7 +3,22 @@ import getUserRecipes from "@/lib/db/getUserRecipes";
 import { createSupabaseServerClient as supabase } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-
+/**
+ * returns 5 suggested meal based on the available ingredients of user
+ *
+ * request:
+ *   Headers: 
+ *     Authorization: Bearer <Supabase token>
+ *
+ * response:
+ * [
+ *   {
+ *      recipe_name: string;
+ *      ingredients: string[];
+ *      descriptin: string;
+ *   }
+ * ]
+ */
 export async function POST(req: Request){
 
   try {

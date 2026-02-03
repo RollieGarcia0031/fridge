@@ -4,6 +4,7 @@ import getUserRecipes from "@/lib/db/getUserRecipes";
 
 /**
  * Obtain the list of ingredients owned by the logged user
+ *
  */
 export async function GET(req: Request){
 

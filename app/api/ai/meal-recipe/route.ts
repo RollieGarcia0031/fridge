@@ -7,6 +7,22 @@ import { getFullRecipeFlow } from "@/lib/ai-flow/getFullRecipe";
  *  recipe_name: "egg pie",
  *  ingredients: ["egg", "sugar", "flour"]
  * }
+ *
+ * Response:
+ *   200:
+ *     name: string;
+ *     serving number;
+ *     cook_time_minutes: number;
+ *     ingredients: [{
+ *       name: string;
+ *       quantity: string;
+ *     }]
+ *     steps: [{
+ *       order: number;
+ *       title: string;
+ *       instructions: string;
+ *     }]
+ *     tips: string[]
  */
 export async function POST(req: Request){
   try {
