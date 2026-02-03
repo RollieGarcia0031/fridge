@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabase/client";
 import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
-import SuggestedDialog from "@/components/SuggestedDialog";
+import SuggestedDialog from 
+"@/components/SuggestedDialog";
 
 interface Ingredient {
   category: string;
@@ -22,7 +23,9 @@ interface OwnedIngredient {
 
 export default function Home() {
 
+  // state of available ingredients in the database
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  // state of the ingredients retrieved from logged user's database
   const [ownedIngredients, setOwnedIngredients] = useState<OwnedIngredient[]>([]);
 
   // selected ingredient from UI to add to inventory
@@ -39,19 +42,24 @@ export default function Home() {
     setOwnedIngredients(data);
   }
 
-  async function fetchRecommendedRecipes(){
-    const data = await getRecommendedRecipes();
-    setSuggestedRecipes(data!);
-    console.log(data);
+  async function RefreshRecommendedRecipes(){
+    try {
+      const data = await getRecommendedRecipes();
+      setSuggestedRecipes(data!);
+      console.log(data);
+  
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   useEffect(()=>{
-    async function fetchIngredients(){
+    async function RefreshIngredientList(){
       const data = await getAllIngredients();
       setIngredients(data);
     }
 
-    fetchIngredients();
+    RefreshIngredientList();
     fetchOwnedIngredients();
   },[]);
 
@@ -75,7 +83,7 @@ export default function Home() {
 
         <div className="mt-4 gap-2 flex flex-row justify-center items-center">
           <button
-            onClick={e=>addIngredient()}
+            onClick={e=>saveIngredient()}
             className="bg-bg-light border-border border border-solid w-[20rem]
             py-2 px-4 rounded-sm hover:bg-highlight duration-150">
             Add
@@ -100,12 +108,15 @@ export default function Home() {
       ref={suggestionDialogRef}
       setSuggestedRecipes={setSuggestedRecipes}
       suggestedRecipes={suggestedRecipes}
-      fetchRecommendedRecipes={fetchRecommendedRecipes}
+      RefreshRecommendedRecipes={RefreshRecommendedRecipes}
     />
     </>
   );
 
-  async function addIngredient(){
+  /**
+   * Save a new ingredients in the user's datbase
+   */
+  async function saveIngredient(){
     try {
       const refreshToken = await supabase.auth.getSession();
 
@@ -132,9 +143,13 @@ export default function Home() {
     }
   }
 
+  /**
+   * Open the suggested ingredients dialog which contains
+   * the 5 recommended recipes
+   */
   function openSuggestedIngredients(){
     suggestionDialogRef.current?.showModal();
-    fetchRecommendedRecipes();
+    RefreshRecommendedRecipes();
   }
 }
 
@@ -170,6 +185,10 @@ function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients}: {
     </div>
   );
 
+  /**
+   * Removes an owned ingredient from user's database
+   * @param id 
+   */
   async function removeIngredient(id: string){
     try{
 
@@ -197,12 +216,19 @@ function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients}: {
   }
 }
 
+/**
+ * fetch all listed ingredients in the database
+ * @returns 
+ */
 async function getAllIngredients(): Promise<Ingredient[]> {
   const { data, error } = await supabase.from("ingredients").select("*");
   if (error) throw new Error(error.message);
   return data;
 }
 
+/**
+ * retrieve the ingredients owned by the user
+ */
 async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
 
   const refreshToken = await supabase.auth.getSession();
@@ -219,11 +245,13 @@ async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
   return data.recipes;
 }
 
-async function getRecommendedRecipes(){
+/**
+ * @returns - 5 suggested recipes
+ */
+async function getRecommendedRecipes(): Promise<Recipe[]> {
 
   const refreshToken = await supabase.auth.getSession();
 
-  try{
     const res = await fetch("/api/ai/meal-ideas",{
       method:"POST",
       headers: {
@@ -234,10 +262,8 @@ async function getRecommendedRecipes(){
 
     if (!res.ok) throw new Error(await res.text());
 
-    const data = await res.json();
+    const data = await res.json() as Recipe[];
 
     return data;
-  } catch (error){
-    console.log(error);
-  }
+
 }

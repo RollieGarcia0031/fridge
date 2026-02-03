@@ -4,11 +4,11 @@ import { IoIosCloseCircleOutline } from "react-icons/io";
 import { Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedRecipes, fetchRecommendedRecipes}:{
+export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedRecipes, RefreshRecommendedRecipes: fetchRecommendedRecipes}:{
   ref: React.RefObject<HTMLDialogElement | null>,
   suggestedRecipes: Recipe[],
   setSuggestedRecipes: Dispatch<SetStateAction<Recipe[]>>,
-  fetchRecommendedRecipes: () => Promise<void>
+  RefreshRecommendedRecipes: () => Promise<void>
 }){
   return(
     <dialog ref={ref}
