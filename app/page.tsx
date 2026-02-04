@@ -37,19 +37,28 @@ export default function Home() {
   // state for recipe suggestions
   const [suggestedRecipes, setSuggestedRecipes] = useState<Recipe[]>([]);
 
+  // state for loading suggestion from AI
+  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+
   async function fetchOwnedIngredients(){
     const data = await getOwnedIngredients();
     setOwnedIngredients(data);
   }
 
+  /**
+   * reload the state for suggested recipes
+   */
   async function RefreshRecommendedRecipes(){
     try {
+      setIsLoadingResponse(true);
       const data = await getRecommendedRecipes();
       setSuggestedRecipes(data!);
       console.log(data);
   
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsLoadingResponse(false);
     }
   }
 
@@ -109,6 +118,8 @@ export default function Home() {
       setSuggestedRecipes={setSuggestedRecipes}
       suggestedRecipes={suggestedRecipes}
       RefreshRecommendedRecipes={RefreshRecommendedRecipes}
+      isLoadingResponse={isLoadingResponse}
+
     />
     </>
   );

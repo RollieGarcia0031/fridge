@@ -3,12 +3,14 @@
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
+import { LuRefreshCcw } from "react-icons/lu";
 
-export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedRecipes, RefreshRecommendedRecipes: fetchRecommendedRecipes}:{
+export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedRecipes, RefreshRecommendedRecipes, isLoadingResponse}:{
   ref: React.RefObject<HTMLDialogElement | null>,
   suggestedRecipes: Recipe[],
   setSuggestedRecipes: Dispatch<SetStateAction<Recipe[]>>,
-  RefreshRecommendedRecipes: () => Promise<void>
+  RefreshRecommendedRecipes: () => Promise<void>,
+  isLoadingResponse: boolean
 }){
   return(
     <dialog ref={ref}
@@ -28,13 +30,20 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
           Recipes are generated based on your available ingredients
         </p>
 
-        <button onClick={fetchRecommendedRecipes}
+        <button onClick={RefreshRecommendedRecipes}
           className="text-black bg-secondary px-2 py-px rounded-sm mt-2"
         >
           Refresh
         </button>
       </div>
 
+      {
+        isLoadingResponse &&
+        <span className="flex flex-row justify-center itemse-center" >
+          <LuRefreshCcw className="dark:fill-white animate-spin"/>
+          <p className="dark:text-text-muted">Loading, please wait</p>
+        </span>
+      }
       <div className="card flex-ccl gap-4 mx-4 mt-8">
         {suggestedRecipes?.map((recipe,index) => (
           <RecipeCard key={index} recipe={recipe} />
