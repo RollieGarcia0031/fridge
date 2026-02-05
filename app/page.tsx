@@ -74,37 +74,41 @@ export default function Home() {
 
   return (
     <>
-    <div className="card-screen">
-      <div>
-        
-        <div className="w-full">
-          <select
-            value={selectedIngredientId}
-            onChange={(e) => setSelectedIngredientId(e.target.value)}
-            className="w-full bg-bg-light border-border border border-solid py-2 px-4 rounded-sm">
-            {ingredients.map((ingredient) => (
-              <option key={ingredient.id} value={ingredient.id}>
-                {ingredient.name}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="h-screen p-8 flex-cc">
+      <div className="flex flex-col h-full gap-8">
+        <fieldset>
+          {/* select input */}
+          <div className="w-full">
+            <select
+              value={selectedIngredientId}
+              onChange={(e) => setSelectedIngredientId(e.target.value)}
+              className="w-full bg-bg-light border-border border border-solid py-2 px-4 rounded-sm">
+              {ingredients.map((ingredient) => (
+                <option key={ingredient.id} value={ingredient.id}>
+                  {ingredient.name}
+                </option>
+              ))}
+            </select>
+          </div>
+  
+          <div className="mt-4 gap-2 flex flex-row justify-center items-center">
+            {/* add button */}
+            <button
+              onClick={e=>saveIngredient()}
+              className="bg-bg-light border-border border border-solid w-[20rem]
+              py-2 px-4 rounded-sm hover:bg-highlight duration-150">
+              Add
+            </button>
 
-        <div className="mt-4 gap-2 flex flex-row justify-center items-center">
-          <button
-            onClick={e=>saveIngredient()}
-            className="bg-bg-light border-border border border-solid w-[20rem]
-            py-2 px-4 rounded-sm hover:bg-highlight duration-150">
-            Add
-          </button>
-
-          <button
-            onClick={()=>openSuggestedIngredients()}
-            className="bg-primary p-2 rounded-xl hover:bg-secondary duration-150"
-          >
-            <VscDebugContinue className="dark:fill-black text-2xl"/>
-          </button>
-        </div>
+            {/* show suggestion dialog button */}
+            <button
+              onClick={()=>openSuggestedIngredients()}
+              className="bg-primary p-2 rounded-xl hover:bg-secondary duration-150"
+            >
+              <VscDebugContinue className="dark:fill-black text-2xl"/>
+            </button>
+          </div>
+        </fieldset>
 
         <OwnedIngredientsPane
           setOwnedIngredients={setOwnedIngredients}
@@ -160,7 +164,9 @@ export default function Home() {
    */
   function openSuggestedIngredients(){
     suggestionDialogRef.current?.showModal();
-    RefreshRecommendedRecipes();
+    if (suggestedRecipes.length === 0){
+      RefreshRecommendedRecipes();
+    }
   }
 }
 
@@ -170,28 +176,32 @@ function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients}: {
 }) {
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col">
       {ownedIngredients.length === 0 && <p>No ingredients owned</p>}
-      {ownedIngredients.length > 0 &&
-        <p className="text-primary font-semibold my-4"
-        >
-          Owned Ingredients:
-        </p>
-      }
 
-      <div className="card flex flex-col items-start gap-2 h-80 overflow-y-scroll">
-        {ownedIngredients?.map((ownedIngredient) => (
-          <div key={ownedIngredient.id}
-            className="flex-rl gap-2 border-highlight border border-solid
-              py-1 px-2 rounded-xl hover:bg-highlight duration-150"
+      <div className="card flex-cl flex-1 gap-2 overflow-y-scroll">
+
+        {ownedIngredients.length > 0 &&
+          <p className="text-primary font-semibold mb-4"
           >
-            <p>{ownedIngredient.ingredient.name}</p>
+            Owned Ingredients:
+          </p>
+        }
 
-            <button onClick={()=>removeIngredient(ownedIngredient.id)}>
-              <IoIosCloseCircleOutline className="text-lg fill-warning" />
-            </button>
-          </div>
-        ))}
+        <div className="flex-1 flex flex-col items-start gap-2">
+          {ownedIngredients?.map((ownedIngredient) => (
+            <div key={ownedIngredient.id}
+              className="flex-rl gap-2 border-highlight border border-solid
+                py-1 px-2 rounded-xl hover:bg-highlight duration-150"
+            >
+              <p>{ownedIngredient.ingredient.name}</p>
+
+              <button onClick={()=>removeIngredient(ownedIngredient.id)}>
+                <IoIosCloseCircleOutline className="text-lg fill-warning" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
