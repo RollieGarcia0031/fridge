@@ -78,6 +78,9 @@ body {
     @apply flex flex-col items-center justify-center;
   }
 
+  .flex-cl{
+    @apply flex flex-col items-start;
+  }
   .flex-rl {
     @apply flex flex-row items-center;
   }
@@ -106,9 +109,5 @@ body {
       bg-background border-border border border-solid rounded-md px-2 py-1
       focus:outline-none backdrop-blur-3xl backdrop-brightness-200
       shadow-2xl shadow-black/50;
-  }
-
-  dialog:not([open]) {
-    @apply hidden;
   }
 }

@@ -14,7 +14,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
 }){
   return(
     <dialog ref={ref}
-      className="flex-cl w-140 h-160 pb-8"
+      className="open:flex-cl open:w-140 open:h-160 open:pb-8"
     >
       <div className="flex flex-row items-end justify-end">
         <button onClick={handleClose}>
