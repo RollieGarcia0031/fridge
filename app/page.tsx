@@ -4,8 +4,9 @@ import { supabase } from "@/lib/supabase/client";
 import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
-import SuggestedDialog from 
-"@/components/SuggestedDialog";
+import SuggestedDialog from "@/components/SuggestedDialog";
+import { TailSpin } from "react-loader-spinner";
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Ingredient {
   category: string;
@@ -28,6 +29,9 @@ export default function Home() {
   // state of the ingredients retrieved from logged user's database
   const [ownedIngredients, setOwnedIngredients] = useState<OwnedIngredient[]>([]);
 
+  // state for loading the owned ingredients
+  const [isLoadingOwnedIngredients, setIsLoadingOwnedIngredients] = useState(false);
+
   // selected ingredient from UI to add to inventory
   const [selectedIngredientId, setSelectedIngredientId] = useState<string>("");
 
@@ -41,8 +45,17 @@ export default function Home() {
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
 
   async function fetchOwnedIngredients(){
-    const data = await getOwnedIngredients();
-    setOwnedIngredients(data);
+    try {
+      // update state for UI loading animation
+      setIsLoadingOwnedIngredients(true);
+      // fetch the owned ingredients
+      const data = await getOwnedIngredients();
+      setOwnedIngredients(data);
+    } catch (error){
+      console.error(error);
+    } finally {
+      setIsLoadingOwnedIngredients(false);
+    }
   }
 
   /**
@@ -113,6 +126,7 @@ export default function Home() {
         <OwnedIngredientsPane
           setOwnedIngredients={setOwnedIngredients}
           ownedIngredients={ownedIngredients}
+          isLoadingOwnedIngredients={isLoadingOwnedIngredients}
         />
       </div>
     </div>
@@ -170,37 +184,64 @@ export default function Home() {
   }
 }
 
-function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients}: {
+function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients, isLoadingOwnedIngredients}: {
   setOwnedIngredients: (ownedIngredients: OwnedIngredient[]) => void,
-  ownedIngredients: OwnedIngredient[]
+  ownedIngredients: OwnedIngredient[],
+  isLoadingOwnedIngredients: boolean
 }) {
 
   return (
     <div className="flex-1 flex flex-col">
-      {ownedIngredients.length === 0 && <p>No ingredients owned</p>}
+      {
+        !isLoadingOwnedIngredients && ownedIngredients.length === 0 &&
+          <p>No ingredients owned</p>
+      }
 
       <div className="card flex-cl flex-1 gap-2 overflow-y-scroll">
 
-        {ownedIngredients.length > 0 &&
+        {!isLoadingOwnedIngredients && ownedIngredients.length > 0 &&
           <p className="text-primary font-semibold mb-4"
           >
             Owned Ingredients:
           </p>
         }
 
-        <div className="flex-1 flex flex-col items-start gap-2">
-          {ownedIngredients?.map((ownedIngredient) => (
-            <div key={ownedIngredient.id}
-              className="flex-rl gap-2 border-highlight border border-solid
-                py-1 px-2 rounded-xl hover:bg-highlight duration-150"
-            >
-              <p>{ownedIngredient.ingredient.name}</p>
+        {
+          isLoadingOwnedIngredients &&
+          <div className="w-full flex-cc">
+            <TailSpin
+              visible={true}
+              height="80"
+              width="80"
+              color="#5e03fc"
+              ariaLabel="tail-spin-loading"
+              radius="1"
+              wrapperStyle={{}}
+              wrapperClass=""
+            />
+          </div>            
+        }
 
-              <button onClick={()=>removeIngredient(ownedIngredient.id)}>
-                <IoIosCloseCircleOutline className="text-lg fill-warning" />
-              </button>
-            </div>
-          ))}
+        <div className="flex-1 flex flex-col items-start gap-2">
+          <AnimatePresence>
+            {ownedIngredients?.map((ownedIngredient) => (
+              <motion.div
+                key={ownedIngredient.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="flex-rl gap-2 border-highlight border border-solid
+                  py-1 px-2 rounded-xl hover:bg-highlight duration-150"
+              >
+                <p>{ownedIngredient.ingredient.name}</p>
+
+                <button onClick={()=>removeIngredient(ownedIngredient.id)}>
+                  <IoIosCloseCircleOutline className="text-lg fill-warning" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>
