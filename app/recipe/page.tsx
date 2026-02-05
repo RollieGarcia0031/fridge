@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { CirclesWithBar } from 'react-loader-spinner';
 
 export default function Recipe() {
   const router = useRouter();
@@ -51,10 +52,29 @@ export default function Recipe() {
   }, [recipe]);
 
   return (
-    <div>
-      {loading && <p>Loading...</p>}
+    <div className="card-screen">
+      {loading && 
+        <div className="flex-cc gap-3">
+          <CirclesWithBar
+            height="100"
+            width="100"
+            color="#4fa94d"
+            outerCircleColor="#4fa94d"
+            innerCircleColor="#4fa94d"
+            barColor="#4fa94d"
+            ariaLabel="circles-with-bar-loading"
+            wrapperStyle={{}}
+            wrapperClass=""
+            visible={true}
+            />
 
-      {instructions && <InstructionPanel instructions={instructions} />}
+            <p className="text-text-muted text-sm">
+              Loading instructions...
+            </p>
+        </div>
+      }
+
+      {instructions && !loading && <InstructionPanel instructions={instructions} />}
     </div>
   );
 }
