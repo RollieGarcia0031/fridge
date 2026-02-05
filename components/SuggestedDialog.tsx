@@ -5,6 +5,7 @@ import { Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { LuRefreshCcw } from "react-icons/lu";
 import { RxReload } from "react-icons/rx";
+import { TailSpin } from "react-loader-spinner";
 
 export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedRecipes, RefreshRecommendedRecipes, isLoadingResponse}:{
   ref: React.RefObject<HTMLDialogElement | null>,
@@ -24,6 +25,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
         </button>
       </div>
       
+      {/* option header and menu buttons */}
       <div className="m-4">
         <p className="text-text text-lg">
           Recommended recipes
@@ -42,18 +44,30 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
         </button>
       </div>
 
+      {/* loader animation for suggestions */}
       {
         isLoadingResponse &&
-        <span className="flex flex-row justify-center itemse-center" >
-          <LuRefreshCcw className="dark:fill-white animate-spin"/>
-          <p className="dark:text-text-muted">Loading, please wait</p>
-        </span>
+        <div className="flex flex-rc gap-4 my-16" >
+            <TailSpin
+              visible={true}
+              height="20"
+              width="20"
+              color="#5e03fc"
+              ariaLabel="tail-spin-loading"
+              radius="1"
+              wrapperStyle={{}}
+              wrapperClass=""
+            />
+          <p className="dark:text-text-muted">Loading meal suggestions...</p>
+        </div>
       }
-      <div className="card flex-ccl gap-4 mx-4 mt-4">
-        {suggestedRecipes?.map((recipe,index) => (
-          <RecipeCard key={index} recipe={recipe} />
-        ))}
-      </div>
+      { suggestedRecipes.length > 0 &&
+        <div className="cardflex-ccl gap-4 mx-4 mt-4">
+          {suggestedRecipes?.map((recipe,index) => (
+            <RecipeCard key={index} recipe={recipe} />
+          ))}
+        </div>
+      }
     </dialog>
   )
 
