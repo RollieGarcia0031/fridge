@@ -85,6 +85,10 @@ body {
     @apply flex flex-row items-center;
   }
 
+  .flex-rc {
+    @apply flex flex-row items-center justify-center;
+  }
+
   .btn-primary {
     @apply bg-primary text-black py-1 px-2 rounded-md border-border;
   }

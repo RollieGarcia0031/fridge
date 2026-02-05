@@ -4,6 +4,7 @@ import { IoIosCloseCircleOutline } from "react-icons/io";
 import { Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { LuRefreshCcw } from "react-icons/lu";
+import { RxReload } from "react-icons/rx";
 
 export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedRecipes, RefreshRecommendedRecipes, isLoadingResponse}:{
   ref: React.RefObject<HTMLDialogElement | null>,
@@ -16,11 +17,13 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
     <dialog ref={ref}
       className="open:flex-cl open:w-140 open:h-160 open:pb-8"
     >
+      {/* header with close button */}
       <div className="flex flex-row items-end justify-end">
         <button onClick={handleClose}>
           <IoIosCloseCircleOutline className="fill-red-700 text-xl"/>
         </button>
       </div>
+      
       <div className="m-4">
         <p className="text-text text-lg">
           Recommended recipes
@@ -31,9 +34,11 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
         </p>
 
         <button onClick={RefreshRecommendedRecipes}
-          className="text-black bg-secondary px-2 py-px rounded-sm mt-2"
+          title="Refresh Suggestions"
+          className="text-black bg-secondary md:aspect-square sm:aspect-auto p-2 rounded-sm flex-rc gap-2"
         >
-          Refresh
+          <RxReload/>
+          <span className="sm:hidden text-sm">Refresh Suggestions</span>
         </button>
       </div>
 
@@ -44,7 +49,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
           <p className="dark:text-text-muted">Loading, please wait</p>
         </span>
       }
-      <div className="card flex-ccl gap-4 mx-4 mt-8">
+      <div className="card flex-ccl gap-4 mx-4 mt-4">
         {suggestedRecipes?.map((recipe,index) => (
           <RecipeCard key={index} recipe={recipe} />
         ))}
@@ -61,12 +66,12 @@ function RecipeCard({recipe}:{recipe: Recipe}){
   const router = useRouter();
 
   return (
-    <div className="border-t border-t-border rounded-md p-2
+    <div className="card rounded-md p-2
       overflow-y-auto hover:bg-highlight duration-150
       cursor-pointer"
       onClick={openRecipe}
     >
-      <p className="text-text text-md">
+      <p className="text-text text-sm">
         {recipe.recipe_name}
       </p>
       <p className="text-text-muted text-sm text-justify px-8">
