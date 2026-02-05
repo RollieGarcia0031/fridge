@@ -6,6 +6,7 @@ import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
 import SuggestedDialog from "@/components/SuggestedDialog";
 import { TailSpin } from "react-loader-spinner";
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Ingredient {
   category: string;
@@ -222,18 +223,25 @@ function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients, isLoadingO
         }
 
         <div className="flex-1 flex flex-col items-start gap-2">
-          {ownedIngredients?.map((ownedIngredient) => (
-            <div key={ownedIngredient.id}
-              className="flex-rl gap-2 border-highlight border border-solid
-                py-1 px-2 rounded-xl hover:bg-highlight duration-150"
-            >
-              <p>{ownedIngredient.ingredient.name}</p>
+          <AnimatePresence>
+            {ownedIngredients?.map((ownedIngredient) => (
+              <motion.div
+                key={ownedIngredient.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="flex-rl gap-2 border-highlight border border-solid
+                  py-1 px-2 rounded-xl hover:bg-highlight duration-150"
+              >
+                <p>{ownedIngredient.ingredient.name}</p>
 
-              <button onClick={()=>removeIngredient(ownedIngredient.id)}>
-                <IoIosCloseCircleOutline className="text-lg fill-warning" />
-              </button>
-            </div>
-          ))}
+                <button onClick={()=>removeIngredient(ownedIngredient.id)}>
+                  <IoIosCloseCircleOutline className="text-lg fill-warning" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>
