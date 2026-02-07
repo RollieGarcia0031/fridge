@@ -87,8 +87,11 @@ export default function Home() {
 
   return (
     <>
-    <div className="h-screen p-8 flex-cc">
-      <div className="flex flex-col h-full gap-8">
+    <div className="min-h-screen p-4
+      flex flex-col items-center justify-center
+      sm:px-8 overflow-hidden"
+    >
+      <div className="flex flex-col flex-1 w-full sm:w-88 max-w-lg gap-8 h-full">
         <fieldset>
           {/* select input */}
           <div className="w-full">
@@ -104,11 +107,11 @@ export default function Home() {
             </select>
           </div>
   
-          <div className="mt-4 gap-2 flex flex-row justify-center items-center">
+          <div className="mt-4 gap-2 flex flex-row items-center">
             {/* add button */}
             <button
               onClick={e=>saveIngredient()}
-              className="bg-bg-light border-border border border-solid w-[20rem]
+              className="flex-1 bg-bg-light border-border border border-solid w-full sm:w-80
               py-2 px-4 rounded-sm hover:bg-highlight duration-150">
               Add
             </button>
@@ -197,7 +200,7 @@ function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients, isLoadingO
           <p>No ingredients owned</p>
       }
 
-      <div className="card flex-cl flex-1 gap-2 overflow-y-scroll">
+      <div className="card flex-cl flex-1 max-h-100 sm:max-h-full gap-2 overflow-y-auto">
 
         {!isLoadingOwnedIngredients && ownedIngredients.length > 0 &&
           <p className="text-primary font-semibold mb-4"
