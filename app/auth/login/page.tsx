@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 export default function Login(){
   const router = useRouter();
@@ -52,7 +53,12 @@ export default function Login(){
       router.push("/");
     } catch (error) {
       if (error instanceof Error)
-        console.error(error.message);
+        if (error instanceof Error){
+          toast(error.message, {
+            type: "error"
+          });
+          console.error(error.message);
+        }
     }
   }
 }

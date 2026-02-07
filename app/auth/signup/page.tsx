@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 export default function SignUp(){
 
@@ -44,10 +45,16 @@ export default function SignUp(){
 
       if (error) throw new Error(error.message);
 
-      alert("Please check your email to confirm");
+      toast("Please check your email to confirm", {
+        type: "info"
+      });
     } catch (error) {
-      if (error instanceof Error)
+      if (error instanceof Error){
+        toast(error.message, {
+          type: "error"
+        })
         console.error(error.message);
+      }
     }
 
   }
