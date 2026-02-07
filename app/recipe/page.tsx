@@ -52,9 +52,9 @@ export default function Recipe() {
   }, [recipe]);
 
   return (
-    <div className="card-screen">
+    <div className="min-h-screen flex items-center justify-center p-2">
       {loading && 
-        <div className="flex-cc gap-3">
+        <div className="flex flex-col items-center w-full gap-3">
           <CirclesWithBar
             height="100"
             width="100"
@@ -85,7 +85,7 @@ function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
   if (!instructions) return <p>Loading...</p>;
 
   return (
-    <div className="card w-200">
+    <div className="card overflow-auto p-0 sm:max-w-140 max-w-none">
       <p className="text-lg">{instructions.name}</p>
 
       <p className="text-sm space-x-4">
