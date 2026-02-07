@@ -16,7 +16,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
 }){
   return(
     <dialog ref={ref}
-      className="open:flex-cl open:w-140 open:h-160 open:pb-8"
+      className="open:flex-cl open:sm:w-140 w-full open:sm:h-160 open:pb-8"
     >
       {/* header with close button */}
       <div className="flex flex-row items-end justify-end">
@@ -26,7 +26,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
       </div>
       
       {/* option header and menu buttons */}
-      <div className="m-4">
+      <div className="m-0 sm:m-4">
         <p className="text-text text-lg">
           Recommended recipes
         </p>
@@ -39,8 +39,8 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
           title="Refresh Suggestions"
           className="text-black bg-secondary md:aspect-square sm:aspect-auto p-2 rounded-sm flex-rc gap-2"
         >
-          <RxReload/>
-          <span className="sm:hidden text-sm">Refresh Suggestions</span>
+          <RxReload className="text-xs sm:text-md" />
+          <span className="sm:hidden text-xs">Refresh Suggestions</span>
         </button>
       </div>
 
@@ -62,7 +62,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
         </div>
       }
       { suggestedRecipes.length > 0 &&
-        <div className="cardflex-ccl gap-4 mx-4 mt-4">
+        <div className="flex-ccl gap-4 sm:mx-4 m-0 mt-4">
           {suggestedRecipes?.map((recipe,index) => (
             <RecipeCard key={index} recipe={recipe} />
           ))}
@@ -80,7 +80,7 @@ function RecipeCard({recipe}:{recipe: Recipe}){
   const router = useRouter();
 
   return (
-    <div className="card rounded-md p-2
+    <div className="card rounded-md sm:p-2 p-1
       overflow-y-auto hover:bg-highlight duration-150
       cursor-pointer"
       onClick={openRecipe}
@@ -88,7 +88,7 @@ function RecipeCard({recipe}:{recipe: Recipe}){
       <p className="text-text text-sm">
         {recipe.recipe_name}
       </p>
-      <p className="text-text-muted text-sm text-justify px-8">
+      <p className="text-text-muted text-xs sm:text-sm text-justify sm:px-8 px-2">
         {recipe.description}
       </p>
     </div>
