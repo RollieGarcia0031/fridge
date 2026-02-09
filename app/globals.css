@@ -96,8 +96,8 @@ body {
 
 @layer base {
   input[type="text"], input[type="email"], input[type="password"] {
-    @apply border-border border-2 border-solid rounded-md px-2
-    focus:outline-none;
+    @apply border-border border border-solid rounded-md px-2
+    focus:outline-none bg-bg-dark;
   }
 
   button {

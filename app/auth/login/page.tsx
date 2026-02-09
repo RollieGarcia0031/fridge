@@ -9,22 +9,36 @@ export default function Login(){
   const router = useRouter();
 
   return (
-    <div className="card-screen">
-      <main>
-        <form onSubmit={e=>handleSubmit(e)}>
-          <h1 className="text-center my-8">
+    <div className="card-screen px-2">
+      <main className="sm:w-120 w-full h-auto
+        sm:p-10 p-4 py-10 bg-bg-light border border-border rounded-xl "
+      >
+        <form onSubmit={e=>handleSubmit(e)}
+          className="grid grid-rows-[auto_1fr_auto] gap-8 sm:gap-10
+            h-full"  
+        >
+          <h1 className="text-center font-semibold text-xl">
             Log in to your account
           </h1>
-          <fieldset className="flex-ccl gap-1">
+          <fieldset
+            className="flex-ccl gap-1"
+          >
             <label>Email:</label>
-            <input type="email" name="email" required />
+            <input type="email" name="email" required
+              placeholder="example@email.com"
+              className="w-full rounded-sm sm:px-4 px-2 py-2"
+            />
             <br/>
-            <label>Password</label>
-            <input type="password" name="password" required />
+            <label>Password:</label>
+            <input type="password" name="password" required
+              className="w-full rounded-sm sm:px-4 px-2 py-2"
+            />
           </fieldset>
           
-          <div className="flex-cc mt-8 gap-4">
-            <button type="submit" className="btn-primary py-1 px-2 rounded-md w-full mx-2">
+          <div className="flex-cc gap-4">
+            <button type="submit" className="btn-primary hover:bg-secondary duration-300
+              py-1 px-2 rounded-md w-full mx-2
+            ">
               Log in
             </button>
 
