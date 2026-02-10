@@ -21,21 +21,20 @@ export default function Login(){
             Log in to your account
           </h1>
           <fieldset
-            className="flex-ccl gap-1"
+            className="flex-ccl gap-4"
           >
             <label>Email:</label>
             <input type="email" name="email" required
               placeholder="example@email.com"
               className="w-full rounded-sm sm:px-4 px-2 py-2"
             />
-            <br/>
             <label>Password:</label>
             <input type="password" name="password" required
               className="w-full rounded-sm sm:px-4 px-2 py-2"
             />
           </fieldset>
           
-          <div className="flex-cc gap-4">
+          <div className="flex-cc gap-2">
             <button type="submit" className="btn-primary hover:bg-secondary duration-300
               py-1 px-2 rounded-md w-full mx-2
             ">

@@ -7,22 +7,38 @@ import { toast } from "react-toastify";
 export default function SignUp(){
 
   return (
-    <div className="card-screen">
-      <form onSubmit={e=>handleSubmit(e)} className="flex-cc">
-        <h1>Create A new Account</h1>
-        <fieldset className="flex-ccl gap-4 mt-8">
+    <div className="card-screen sm:p-0 p-2">
+      <form onSubmit={e=>handleSubmit(e)}
+        className="flex-cc
+        bg-bg-light border-border border border-solid rounded-md
+        sm:px-10 py-10 px-4 w-120
+        grid-grid-rows-[auto_1fr_auto] gap-8 sm:gap-10"
+      >
+        <h1
+          className="font-semibold text-xl"
+        >
+          Create A new Account
+        </h1>
+        <fieldset className="flex-ccl gap-4 w-full">
             <label>
-              Email: <br/>
-              <input type="email" name="email" required />
+              Email:
             </label>
+            <input type="email" name="email" required
+              className="w-full rounded-sm sm:px-4 px-2 py-2"
+              placeholder="example@email.com"
+            />
             <label>
-              Password: <br/>
-              <input type="password" name="password" required />
+              Password:
             </label>
+            <input type="password" name="password" required
+              className="w-full rounded-sm sm:px-4 px-2 py-2"
+            />
         </fieldset>
 
-        <div className="flex-cc gap-2 mt-8 w-full">
-          <button type="submit" className="w-full btn-primary px-2 py-1 rounded-md">
+        <div className="flex-cc gap-2 w-full">
+          <button type="submit" className="w-full px-2 py-1 rounded-md
+            bg-primary dark:text-black hover:bg-secondary hover:p-2 duration-400 transition-all
+          ">
             Create Account
           </button>
           <Link href="/auth/login">Log in instead</Link>
