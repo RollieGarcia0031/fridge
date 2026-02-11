@@ -67,7 +67,7 @@ body {
   }
 
   .card {
-    @apply border-border border border-solid rounded-md p-4;
+    @apply border-border border border-solid rounded-md p-4 bg-bg-light;
   }
 
   .flex-ccl {
@@ -81,6 +81,7 @@ body {
   .flex-cl{
     @apply flex flex-col items-start;
   }
+
   .flex-rl {
     @apply flex flex-row items-center;
   }
@@ -90,7 +91,7 @@ body {
   }
 
   .btn-primary {
-    @apply bg-primary text-black py-1 px-2 rounded-md border-border;
+    @apply bg-primary dark:text-black text-white py-1 px-2 rounded-md border-border;
   }
 }
 
