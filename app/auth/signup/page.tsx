@@ -37,7 +37,7 @@ export default function SignUp(){
 
         <div className="flex-cc gap-2 w-full">
           <button type="submit" className="w-full px-2 py-1 rounded-md
-            bg-primary dark:text-black hover:bg-secondary hover:p-2 duration-400 transition-all
+            bg-primary text-white dark:text-blackhover:bg-secondary hover:p-2 duration-400 transition-all
           ">
             Create Account
           </button>

@@ -121,7 +121,7 @@ export default function Home() {
               onClick={()=>openSuggestedIngredients()}
               className="bg-primary p-2 rounded-xl hover:bg-secondary duration-150"
             >
-              <VscDebugContinue className="dark:fill-black text-2xl"/>
+              <VscDebugContinue className="dark:fill-black fill-white text-2xl"/>
             </button>
           </div>
         </fieldset>
@@ -234,8 +234,8 @@ function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients, isLoadingO
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.4 }}
-                className="flex-rl gap-2 border-highlight border border-solid
-                  py-1 px-2 rounded-xl hover:bg-highlight duration-150"
+                className="flex-rl gap-2 border-border border border-solid
+                  py-1 px-2 rounded-xl dark:hover:bg-highlight bg-bg-dark duration-150"
               >
                 <p>{ownedIngredient.ingredient.name}</p>
 
