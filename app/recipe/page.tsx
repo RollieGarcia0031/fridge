@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { CirclesWithBar } from 'react-loader-spinner';
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import Link from "next/link";
 
 export default function Recipe() {
   const router = useRouter();
@@ -86,6 +88,11 @@ function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
 
   return (
     <div className="card overflow-auto p-0 sm:max-w-140 max-w-none">
+      <div className="border-b border-b-border mb-4 pb-2">
+        <Link href="/">
+          <IoArrowBackCircleOutline className="fill-text-muted text-2xl"/>
+        </Link>
+      </div>
       <p className="text-lg">{instructions.name}</p>
 
       <p className="text-sm space-x-4">
