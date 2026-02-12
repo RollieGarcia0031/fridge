@@ -41,7 +41,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
           className="text-black bg-secondary md:aspect-square sm:aspect-auto p-2 rounded-sm flex-rc gap-2"
         >
           <RxReload className="text-xs sm:text-md text-white dark:text-black" />
-          <span className="sm:hidden text-xs fill-white dark:fill-black">Refresh Suggestions</span>
+          <span className="sm:hidden text-xs text-white dark:text-black">Refresh Suggestions</span>
         </button>
       </div>
 
