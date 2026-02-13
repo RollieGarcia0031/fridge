@@ -6,16 +6,21 @@ import { useRouter } from "next/navigation";
 import { LuRefreshCcw } from "react-icons/lu";
 import { RxReload } from "react-icons/rx";
 import { TailSpin } from "react-loader-spinner";
+import { useDashboardContext } from "@/context/DashboardContext";
 
-export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedRecipes, RefreshRecommendedRecipes, isLoadingResponse}:{
-  ref: React.RefObject<HTMLDialogElement | null>,
-  suggestedRecipes: Recipe[],
-  setSuggestedRecipes: Dispatch<SetStateAction<Recipe[]>>,
+export default function SuggestedDialog({RefreshRecommendedRecipes}:{
   RefreshRecommendedRecipes: () => Promise<void>,
-  isLoadingResponse: boolean
 }){
+
+  const {
+    suggestionDialogRef,
+    suggestedRecipes,
+    setSuggestedRecipes,
+    isLoadingResponse
+  } = useDashboardContext()!;
+
   return(
-    <dialog ref={ref}
+    <dialog ref={suggestionDialogRef}
       className="open:flex-cl open:sm:w-140 w-full open:sm:h-160 open:pb-8"
     >
       {/* header with close button */}
@@ -73,7 +78,7 @@ export default function SuggestedDialog({ref, suggestedRecipes, setSuggestedReci
   )
 
   function handleClose(){
-    ref.current?.close();
+    suggestionDialogRef.current?.close();
   }
 }
 

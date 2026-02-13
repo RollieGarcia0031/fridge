@@ -7,80 +7,28 @@ import { VscDebugContinue } from "react-icons/vsc";
 import SuggestedDialog from "@/components/SuggestedDialog";
 import { TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Ingredient {
-  category: string;
-  created_at: string;
-  id: string;
-  name: string;
-  normalized_name: string;
+import { useDashboardContext, DashboardProvider } from "@/context/DashboardContext";
+export default function Dashboard(){
+  return (
+    <DashboardProvider>
+      <Home />
+    </DashboardProvider>
+  );
 }
 
-interface OwnedIngredient {
-  id: string;
-  quantity: number;
-  ingredient: Ingredient;
-}
-
-export default function Home() {
-
-  // state of available ingredients in the database
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  // state of the ingredients retrieved from logged user's database
-  const [ownedIngredients, setOwnedIngredients] = useState<OwnedIngredient[]>([]);
-
-  // state for loading the owned ingredients
-  const [isLoadingOwnedIngredients, setIsLoadingOwnedIngredients] = useState(false);
-
-  // selected ingredient from UI to add to inventory
-  const [selectedIngredientId, setSelectedIngredientId] = useState<string>("");
-
-  // suggestion dialog
-  const suggestionDialogRef = useRef<HTMLDialogElement | null>(null);
-
-  // state for recipe suggestions
-  const [suggestedRecipes, setSuggestedRecipes] = useState<Recipe[]>([]);
-
-  // state for loading suggestion from AI
-  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-
-  async function fetchOwnedIngredients(){
-    try {
-      // update state for UI loading animation
-      setIsLoadingOwnedIngredients(true);
-      // fetch the owned ingredients
-      const data = await getOwnedIngredients();
-      setOwnedIngredients(data);
-    } catch (error){
-      console.error(error);
-    } finally {
-      setIsLoadingOwnedIngredients(false);
-    }
-  }
-
-  /**
-   * reload the state for suggested recipes
-   */
-  async function RefreshRecommendedRecipes(){
-    try {
-      setIsLoadingResponse(true);
-      const data = await getRecommendedRecipes();
-      setSuggestedRecipes(data!);
-      console.log(data);
-  
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoadingResponse(false);
-    }
-  }
+function Home() {
+  const {
+    ingredients,
+    selectedIngredientId,
+    setSelectedIngredientId,
+    suggestionDialogRef,
+    suggestedRecipes,
+    refreshRecommendedRecipes,
+    fetchOwnedIngredients,
+    RefreshIngredientList
+  } = useDashboardContext()!;
 
   useEffect(()=>{
-    async function RefreshIngredientList(){
-      const data = await getAllIngredients();
-      setIngredients(data);
-    }
-
     RefreshIngredientList();
     fetchOwnedIngredients();
   },[]);
@@ -126,22 +74,11 @@ export default function Home() {
           </div>
         </fieldset>
 
-        <OwnedIngredientsPane
-          setOwnedIngredients={setOwnedIngredients}
-          ownedIngredients={ownedIngredients}
-          isLoadingOwnedIngredients={isLoadingOwnedIngredients}
-        />
+        <OwnedIngredientsPane />
       </div>
     </div>
     
-    <SuggestedDialog
-      ref={suggestionDialogRef}
-      setSuggestedRecipes={setSuggestedRecipes}
-      suggestedRecipes={suggestedRecipes}
-      RefreshRecommendedRecipes={RefreshRecommendedRecipes}
-      isLoadingResponse={isLoadingResponse}
-
-    />
+    <SuggestedDialog RefreshRecommendedRecipes={refreshRecommendedRecipes} />
     </>
   );
 
@@ -182,16 +119,17 @@ export default function Home() {
   function openSuggestedIngredients(){
     suggestionDialogRef.current?.showModal();
     if (suggestedRecipes.length === 0){
-      RefreshRecommendedRecipes();
+      refreshRecommendedRecipes();
     }
   }
 }
 
-function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients, isLoadingOwnedIngredients}: {
-  setOwnedIngredients: (ownedIngredients: OwnedIngredient[]) => void,
-  ownedIngredients: OwnedIngredient[],
-  isLoadingOwnedIngredients: boolean
-}) {
+function OwnedIngredientsPane() {
+  const {
+    setOwnedIngredients,
+    ownedIngredients,
+    isLoadingOwnedIngredients
+  } = useDashboardContext()!;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -279,56 +217,4 @@ function OwnedIngredientsPane({setOwnedIngredients, ownedIngredients, isLoadingO
     }
 
   }
-}
-
-/**
- * fetch all listed ingredients in the database
- * @returns 
- */
-async function getAllIngredients(): Promise<Ingredient[]> {
-  const { data, error } = await supabase.from("ingredients").select("*");
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-/**
- * retrieve the ingredients owned by the user
- */
-async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
-
-  const refreshToken = await supabase.auth.getSession();
-
-  const res = await fetch("/api/ingredients/user",{
-    method: "GET",
-    headers:{
-      'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-    }
-  });
-
-  const data = await res.json();
-  console.log(data.recipes);
-  return data.recipes;
-}
-
-/**
- * @returns - 5 suggested recipes
- */
-async function getRecommendedRecipes(): Promise<Recipe[]> {
-
-  const refreshToken = await supabase.auth.getSession();
-
-    const res = await fetch("/api/ai/meal-ideas",{
-      method:"POST",
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-      }
-    });
-
-    if (!res.ok) throw new Error(await res.text());
-
-    const data = await res.json() as Recipe[];
-
-    return data;
-
 }
