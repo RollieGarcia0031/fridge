@@ -8,20 +8,6 @@ import SuggestedDialog from "@/components/SuggestedDialog";
 import { TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface Ingredient {
-  category: string;
-  created_at: string;
-  id: string;
-  name: string;
-  normalized_name: string;
-}
-
-interface OwnedIngredient {
-  id: string;
-  quantity: number;
-  ingredient: Ingredient;
-}
-
 export default function Home() {
 
   // state of available ingredients in the database
