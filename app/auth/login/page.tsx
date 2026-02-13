@@ -4,9 +4,13 @@ import { supabase } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { useState } from "react";
+import { TailSpin } from "react-loader-spinner";
 
 export default function Login(){
   const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <div className="card-screen px-2">
@@ -36,9 +40,25 @@ export default function Login(){
           
           <div className="flex-cc gap-2">
             <button type="submit" className="btn-primary hover:bg-secondary duration-300
-              py-1 px-2 rounded-md w-full mx-2
-            ">
-              Log in
+              py-1 px-2 rounded-md w-full mx-2 flex-cc"
+            >
+              {isLoading &&
+                <TailSpin
+                  visible={true}
+                  height="20"
+                  width="20"
+                  color="#5e03fc"
+                  ariaLabel="tail-spin-loading"
+                  radius="3"
+                  wrapperClass=""
+                />
+              }
+              {
+                !isLoading &&
+                  <span>
+                    Log in
+                  </span>
+              }
             </button>
 
             <Link href="/auth/signup">Create Account</Link>
@@ -51,12 +71,15 @@ export default function Login(){
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>){
     e.preventDefault();
-
+    if(isLoading) return;
+    
     const formData = new FormData(e.currentTarget);
 
     const {email, password}: any = Object.fromEntries(formData) || {};
 
     try {
+      setIsLoading(true);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email, password
       });
@@ -72,6 +95,8 @@ export default function Login(){
           });
           console.error(error.message);
         }
+    } finally {
+      setIsLoading(false);
     }
   }
 }
