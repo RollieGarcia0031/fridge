@@ -35,7 +35,7 @@ function Home() {
 
   return (
     <>
-    <div className="min-h-screen p-4
+    <div className="p-4
       flex flex-col items-center justify-center
       sm:px-8 overflow-hidden"
     >
