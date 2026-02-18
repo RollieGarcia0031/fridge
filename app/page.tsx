@@ -78,7 +78,7 @@ function Home() {
       </div>
     </div>
     
-    <SuggestedDialog RefreshRecommendedRecipes={refreshRecommendedRecipes} />
+    <SuggestedDialog />
     </>
   );
 
@@ -124,6 +124,9 @@ function Home() {
   }
 }
 
+/**
+ * Contains the ingredients owned by the user
+ */
 function OwnedIngredientsPane() {
   const {
     setOwnedIngredients,
@@ -133,11 +136,12 @@ function OwnedIngredientsPane() {
 
   return (
     <div className="flex-1 flex flex-col">
-      {
+      { /** message for empty ingredients list */
         !isLoadingOwnedIngredients && ownedIngredients.length === 0 &&
           <p>No ingredients owned</p>
       }
 
+      {/* container for owned ingredients */}
       <div className="card flex-cl flex-1 max-h-100 sm:max-h-full gap-2 overflow-y-auto">
 
         {!isLoadingOwnedIngredients && ownedIngredients.length > 0 &&
@@ -147,7 +151,7 @@ function OwnedIngredientsPane() {
           </p>
         }
 
-        {
+        { /** loading indicator */
           isLoadingOwnedIngredients &&
           <div className="w-full flex-cc">
             <TailSpin
@@ -166,6 +170,7 @@ function OwnedIngredientsPane() {
         <div className="flex-1 flex flex-col items-start gap-2">
           <AnimatePresence>
             {ownedIngredients?.map((ownedIngredient) => (
+              /** each owned ingredient */
               <motion.div
                 key={ownedIngredient.id}
                 initial={{ opacity: 0 }}

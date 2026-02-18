@@ -1,21 +1,18 @@
 "use client";
 
 import { IoIosCloseCircleOutline } from "react-icons/io";
-import { Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
-import { LuRefreshCcw } from "react-icons/lu";
 import { RxReload } from "react-icons/rx";
 import { TailSpin } from "react-loader-spinner";
 import { useDashboardContext } from "@/context/DashboardContext";
 
-export default function SuggestedDialog({RefreshRecommendedRecipes}:{
-  RefreshRecommendedRecipes: () => Promise<void>,
-}){
+export default function SuggestedDialog(){
 
   const {
     suggestionDialogRef,
     suggestedRecipes,
     setSuggestedRecipes,
+    refreshRecommendedRecipes,
     isLoadingResponse
   } = useDashboardContext()!;
 
@@ -41,7 +38,7 @@ export default function SuggestedDialog({RefreshRecommendedRecipes}:{
         </p>
 
         {/* refresh button */}
-        <button onClick={RefreshRecommendedRecipes}
+        <button onClick={refreshRecommendedRecipes}
           title="Refresh Suggestions"
           className="text-black bg-secondary md:aspect-square sm:aspect-auto p-2 rounded-sm flex-rc gap-2"
         >
@@ -67,6 +64,8 @@ export default function SuggestedDialog({RefreshRecommendedRecipes}:{
           <p className="dark:text-text-muted">Loading meal suggestions...</p>
         </div>
       }
+      
+      {/* suggested recipes content */}
       { suggestedRecipes.length > 0 &&
         <div className="flex-ccl gap-4 sm:mx-4 m-0 mt-4">
           {suggestedRecipes?.map((recipe,index) => (
