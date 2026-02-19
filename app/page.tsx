@@ -27,7 +27,8 @@ function Home() {
     suggestedRecipes,
     refreshRecommendedRecipes,
     fetchOwnedIngredients,
-    RefreshIngredientList
+    RefreshIngredientList,
+    ownedIngredients
   } = useDashboardContext()!;
 
   useEffect(()=>{
@@ -36,9 +37,18 @@ function Home() {
   },[]);
 
   /**
+   * Filter the ingredients list to remove the owned ingredients
+   * 
+   * it is to make sure that the user can't add the same ingredient twice
+   */
+  const filteredIngredients = ingredients.filter((ingredient) => {
+    return !ownedIngredients.some((ownedIngredient) => ownedIngredient.ingredient.id === ingredient.id);
+  });
+
+  /**
    * Convert the ingredients list into a list of options for the select input
    */
-  const options = ingredients.map(i => {
+  const options = filteredIngredients.map(i => {
     return {
       value: i.id,
       label: i.name
@@ -71,6 +81,7 @@ function Home() {
       color: 'var(--text)',
     })
   };
+
 
   const handleIngredientChange = (selectedOption: any) => {
     setSelectedIngredientId(selectedOption.value);
