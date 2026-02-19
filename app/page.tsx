@@ -8,6 +8,8 @@ import SuggestedDialog from "@/components/SuggestedDialog";
 import { TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardContext, DashboardProvider } from "@/context/DashboardContext";
+import Select, { StylesConfig } from 'react-select';
+
 export default function Dashboard(){
   return (
     <DashboardProvider>
@@ -33,6 +35,48 @@ function Home() {
     fetchOwnedIngredients();
   },[]);
 
+  /**
+   * Convert the ingredients list into a list of options for the select input
+   */
+  const options = ingredients.map(i => {
+    return {
+      value: i.id,
+      label: i.name
+    };
+  });
+
+  const colorStyle = {
+    control: (styles: any) => ({
+      ...styles,
+      backgroundColor: 'var(--bg-light)',
+      borderColor: 'var(--border-muted)',
+      color: 'var(--text-muted)',
+    }),
+    menu: (styles: any) => ({
+      ...styles,
+      backgroundColor: 'var(--bg-light)',
+      color: 'var(--text-muted)',
+    }),
+    option: (styles: any) => ({
+      ...styles,
+      backgroundColor: 'var(--bg-light)',
+      color: 'var(--text-muted)',
+    }),
+    singleValue: (styles: any) => ({
+      ...styles,
+      color: 'var(--text-muted)',
+    }),
+    input: (styles: any) => ({
+      ...styles,
+      color: 'var(--text)',
+    })
+  };
+
+  const handleIngredientChange = (selectedOption: any) => {
+    setSelectedIngredientId(selectedOption.value);
+  };
+
+  const selectedIngredient = ingredients.find((ingredient) => ingredient.id === selectedIngredientId);
   return (
     <>
     <div className="p-4
@@ -43,16 +87,12 @@ function Home() {
         <fieldset>
           {/* select input */}
           <div className="w-full">
-            <select
-              value={selectedIngredientId}
-              onChange={(e) => setSelectedIngredientId(e.target.value)}
-              className="w-full bg-bg-light border-border border border-solid py-2 px-4 rounded-sm">
-              {ingredients.map((ingredient) => (
-                <option key={ingredient.id} value={ingredient.id}>
-                  {ingredient.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              instanceId="ingredientSelector"
+              options={options}
+              styles={colorStyle}
+              value={{label: selectedIngredient?.name, value: selectedIngredient?.id}}
+              onChange={handleIngredientChange}            />
           </div>
   
           <div className="mt-4 gap-2 flex flex-row items-center">
