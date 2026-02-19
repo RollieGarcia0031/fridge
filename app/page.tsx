@@ -146,6 +146,7 @@ function Home() {
 
       const data = await res.json();
 
+      setSelectedIngredientId("");
       fetchOwnedIngredients();
     } catch (error){
       console.log(error);
