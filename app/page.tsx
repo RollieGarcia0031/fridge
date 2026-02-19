@@ -83,6 +83,9 @@ function Home() {
   };
 
 
+  /**
+   * updates the state for the selected ingredient
+   */
   const handleIngredientChange = (selectedOption: any) => {
     setSelectedIngredientId(selectedOption.value);
   };
@@ -97,13 +100,16 @@ function Home() {
       <div className="flex flex-col flex-1 w-full sm:w-88 max-w-lg gap-8 h-full">
         <fieldset>
           {/* select input */}
+
           <div className="w-full">
             <Select
               instanceId="ingredientSelector"
               options={options}
               styles={colorStyle}
               value={{label: selectedIngredient?.name, value: selectedIngredient?.id}}
-              onChange={handleIngredientChange}            />
+              onChange={handleIngredientChange}
+            />
+
           </div>
   
           <div className="mt-4 gap-2 flex flex-row items-center">
