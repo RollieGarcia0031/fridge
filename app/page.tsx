@@ -8,6 +8,8 @@ import SuggestedDialog from "@/components/SuggestedDialog";
 import { TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardContext, DashboardProvider } from "@/context/DashboardContext";
+import Select, { StylesConfig } from 'react-select';
+
 export default function Dashboard(){
   return (
     <DashboardProvider>
@@ -25,7 +27,8 @@ function Home() {
     suggestedRecipes,
     refreshRecommendedRecipes,
     fetchOwnedIngredients,
-    RefreshIngredientList
+    RefreshIngredientList,
+    ownedIngredients
   } = useDashboardContext()!;
 
   useEffect(()=>{
@@ -33,6 +36,61 @@ function Home() {
     fetchOwnedIngredients();
   },[]);
 
+  /**
+   * Filter the ingredients list to remove the owned ingredients
+   * 
+   * it is to make sure that the user can't add the same ingredient twice
+   */
+  const filteredIngredients = ingredients.filter((ingredient) => {
+    return !ownedIngredients.some((ownedIngredient) => ownedIngredient.ingredient.id === ingredient.id);
+  });
+
+  /**
+   * Convert the ingredients list into a list of options for the select input
+   */
+  const options = filteredIngredients.map(i => {
+    return {
+      value: i.id,
+      label: i.name
+    };
+  });
+
+  const colorStyle = {
+    control: (styles: any) => ({
+      ...styles,
+      backgroundColor: 'var(--bg-light)',
+      borderColor: 'var(--border-muted)',
+      color: 'var(--text-muted)',
+    }),
+    menu: (styles: any) => ({
+      ...styles,
+      backgroundColor: 'var(--bg-light)',
+      color: 'var(--text-muted)',
+    }),
+    option: (styles: any) => ({
+      ...styles,
+      backgroundColor: 'var(--bg-light)',
+      color: 'var(--text-muted)',
+    }),
+    singleValue: (styles: any) => ({
+      ...styles,
+      color: 'var(--text-muted)',
+    }),
+    input: (styles: any) => ({
+      ...styles,
+      color: 'var(--text)',
+    })
+  };
+
+
+  /**
+   * updates the state for the selected ingredient
+   */
+  const handleIngredientChange = (selectedOption: any) => {
+    setSelectedIngredientId(selectedOption.value);
+  };
+
+  const selectedIngredient = ingredients.find((ingredient) => ingredient.id === selectedIngredientId);
   return (
     <>
     <div className="p-4
@@ -42,17 +100,16 @@ function Home() {
       <div className="flex flex-col flex-1 w-full sm:w-88 max-w-lg gap-8 h-full">
         <fieldset>
           {/* select input */}
+
           <div className="w-full">
-            <select
-              value={selectedIngredientId}
-              onChange={(e) => setSelectedIngredientId(e.target.value)}
-              className="w-full bg-bg-light border-border border border-solid py-2 px-4 rounded-sm">
-              {ingredients.map((ingredient) => (
-                <option key={ingredient.id} value={ingredient.id}>
-                  {ingredient.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              instanceId="ingredientSelector"
+              options={options}
+              styles={colorStyle}
+              value={{label: selectedIngredient?.name, value: selectedIngredient?.id}}
+              onChange={handleIngredientChange}
+            />
+
           </div>
   
           <div className="mt-4 gap-2 flex flex-row items-center">
@@ -106,6 +163,7 @@ function Home() {
 
       const data = await res.json();
 
+      setSelectedIngredientId("");
       fetchOwnedIngredients();
     } catch (error){
       console.log(error);
