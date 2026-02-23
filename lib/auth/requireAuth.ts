@@ -2,6 +2,10 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 
+/**
+ * Checks the supabase session and redirects to the login
+ * page if not authenticated
+ */
 export async function requireAuth() {
   const cookieStore = cookies()
 

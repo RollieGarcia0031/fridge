@@ -1,5 +1,10 @@
 import { createContext, useContext, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase/client";
+import {
+  getOwnedIngredients,
+  getAllIngredients,
+} from "@/lib/services/Ingredients";
+
+import { getRecommendedMeals } from '@/lib/services/Meal';
 
 interface DashboardContextProps {
   /**
@@ -92,7 +97,7 @@ export function DashboardProvider({children}:{
   async function refreshRecommendedRecipes(){
     try {
       setIsLoadingResponse(true);
-      const data = await getRecommendedRecipes();
+      const data = await getRecommendedMeals();
       setSuggestedRecipes(data!);  
     } catch (error) {
       console.error(error);
@@ -152,54 +157,3 @@ export function DashboardProvider({children}:{
 }
 
 export const useDashboardContext = () => useContext(DashboardContext);
-
-/**
- * @returns - 5 suggested recipes
- */
-async function getRecommendedRecipes(): Promise<Recipe[]> {
-
-  const refreshToken = await supabase.auth.getSession();
-
-    const res = await fetch("/api/ai/meal-ideas",{
-      method:"POST",
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-      }
-    });
-
-    if (!res.ok) throw new Error(await res.text());
-
-    const data = await res.json() as Recipe[];
-
-    return data;
-}
-
-/**
- * retrieve the ingredients owned by the user
- */
-async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
-
-  const refreshToken = await supabase.auth.getSession();
-
-  const res = await fetch("/api/ingredients/user",{
-    method: "GET",
-    headers:{
-      'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-    }
-  });
-
-  const data = await res.json();
-  console.log(data.recipes);
-  return data.recipes;
-}
-
-/**
- * fetch all listed ingredients in the database
- * @returns 
- */
-async function getAllIngredients(): Promise<Ingredient[]> {
-  const { data, error } = await supabase.from("ingredients").select("*");
-  if (error) throw new Error(error.message);
-  return data;
-}
