@@ -9,6 +9,8 @@ import { TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardContext, DashboardProvider } from "@/context/DashboardContext";
 import Select, { StylesConfig } from 'react-select';
+import { removeIngredient } from "@/lib/services/Ingredients";
+import { toast } from "react-toastify";
 
 export default function Dashboard(){
   return (
@@ -240,7 +242,7 @@ function OwnedIngredientsPane() {
               >
                 <p>{ownedIngredient.ingredient.name}</p>
 
-                <button onClick={()=>removeIngredient(ownedIngredient.id)}>
+                <button onClick={()=>handleRemoveIngredient(ownedIngredient.id)}>
                   <IoIosCloseCircleOutline className="text-lg fill-warning" />
                 </button>
               </motion.div>
@@ -255,28 +257,16 @@ function OwnedIngredientsPane() {
    * Removes an owned ingredient from user's database
    * @param id 
    */
-  async function removeIngredient(id: string){
+  async function handleRemoveIngredient(id: string){
     try{
-
-      const refreshToken = await supabase.auth.getSession();
-
-      const res = await fetch("/api/ingredients/user",{
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          id
-        })
-      });
-
-      if (res.status !== 200) throw new Error("Failed to remove ingredient");
-
+      removeIngredient(id);
       const newOwnedIngredients = ownedIngredients.filter((ownedIngredient) => ownedIngredient.id !== id);    
       setOwnedIngredients(newOwnedIngredients);
     } catch (error) {
       console.error(error);
+      toast("Error removing ingredient", {
+        type: "error"
+      })
     }
 
   }
