@@ -35,3 +35,25 @@ export async function getAllIngredients(): Promise<Ingredient[]> {
   if (error) throw new Error(error.message);
   return data;
 }
+
+/**
+ * Remove a single ingredient from a user's inventory
+ * 
+ * @param id primary key of ingredient from user's inventory
+ */
+export async function removeIngredient(id: string){
+  const refreshToken = await supabase.auth.getSession();
+
+  const res = await fetch("/api/ingredients/user",{
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
+    },
+    body: JSON.stringify({
+      id
+    })
+  });
+
+  if (res.status !== 200) throw new Error("Failed to remove ingredient");
+}
