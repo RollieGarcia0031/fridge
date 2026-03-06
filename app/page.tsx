@@ -9,7 +9,7 @@ import { TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardContext, DashboardProvider } from "@/context/DashboardContext";
 import Select, { StylesConfig } from 'react-select';
-import { removeIngredient } from "@/lib/services/Ingredients";
+import { removeIngredient, saveIngredient } from "@/lib/services/Ingredients";
 import { toast } from "react-toastify";
 
 export default function Dashboard(){
@@ -117,7 +117,7 @@ function Home() {
           <div className="mt-4 gap-2 flex flex-row items-center">
             {/* add button */}
             <button
-              onClick={e=>saveIngredient()}
+              onClick={e=>handleSaveIngredient()}
               className="flex-1 bg-bg-light border-border border border-solid w-full sm:w-80
               py-2 px-4 rounded-sm hover:bg-highlight duration-150">
               Add
@@ -144,31 +144,14 @@ function Home() {
   /**
    * Save a new ingredients in the user's datbase
    */
-  async function saveIngredient(){
+  async function handleSaveIngredient(){
     try {
-      const refreshToken = await supabase.auth.getSession();
-
-      if (!refreshToken.data.session) return;
-
-      const res = await fetch("/api/ingredients/user",{
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          ingredient_id: selectedIngredientId
-        })
-      })
-
-      if (!res.ok) return console.log(await res.text());
-
-      const data = await res.json();
-
+      await saveIngredient(selectedIngredientId);
       setSelectedIngredientId("");
       fetchOwnedIngredients();
     } catch (error){
       console.log(error);
+      toast.error("Failed to save ingredient");
     }
   }
 

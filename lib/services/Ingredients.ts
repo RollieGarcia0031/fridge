@@ -37,6 +37,28 @@ export async function getAllIngredients(): Promise<Ingredient[]> {
 }
 
 /**
+ * Save a new ingredient in the user's inventory
+ * 
+ * @param ingredient_id primary key of the ingredient
+ */
+export async function saveIngredient(ingredient_id: string){
+  const refreshToken = await supabase.auth.getSession();
+
+  if (!refreshToken.data.session) return;
+
+  const res = await fetch("/api/ingredients/user",{
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
+    },
+    body: JSON.stringify({ ingredient_id })
+  })
+
+  if (!res.ok) throw new Error("Failed to save ingredient");
+}
+
+/**
  * Remove a single ingredient from a user's inventory
  * 
  * @param id primary key of ingredient from user's inventory
