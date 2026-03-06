@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
 import SuggestedDialog from "@/components/SuggestedDialog";
-import { TailSpin } from "react-loader-spinner";
+import { Oval, TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardContext, DashboardProvider } from "@/context/DashboardContext";
 import Select, { StylesConfig } from 'react-select';
@@ -31,7 +31,9 @@ function Home() {
     fetchOwnedIngredients,
     RefreshIngredientList,
     ownedIngredients,
-    setOwnedIngredients
+    setOwnedIngredients,
+    isLoadingAddIngredient,
+    setIsLoadingAddIngredient
   } = useDashboardContext()!;
 
   useEffect(()=>{
@@ -119,9 +121,27 @@ function Home() {
             {/* add button */}
             <button
               onClick={e=>handleSaveIngredient()}
-              className="flex-1 bg-bg-light border-border border border-solid w-full sm:w-80
-              py-2 px-4 rounded-sm hover:bg-highlight duration-150">
-              Add
+              disabled={isLoadingAddIngredient}
+              className="flex flex-row items-center justify-center gap-2
+              bg-bg-light border-border border border-solid w-full sm:w-80
+              py-2 px-4 rounded-sm hover:bg-highlight duration-150
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-bg-light disabled:text-text-muted disabled:border-border-muted"
+              >
+
+              {isLoadingAddIngredient &&
+                <Oval
+                  visible={true}
+                  height="20"
+                  width="20"
+                  strokeWidth="7"
+                  color="#4fa94d"
+                  ariaLabel="oval-loading"
+                  wrapperStyle={{}}
+                  wrapperClass=""
+                />
+              }
+
+              <span>Add</span>
             </button>
 
             {/* show suggestion dialog button */}
@@ -147,12 +167,15 @@ function Home() {
    */
   async function handleSaveIngredient(){
     try {
+      setIsLoadingAddIngredient(true);
       const newOwnedIngredient = await saveIngredient(selectedIngredientId);
       setOwnedIngredients([...ownedIngredients, newOwnedIngredient]);
       setSelectedIngredientId("");
     } catch (error){
       console.log(error);
       toast.error("Failed to save ingredient");
+    } finally {
+      setIsLoadingAddIngredient(false);
     }
   }
 
