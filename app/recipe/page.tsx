@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { CirclesWithBar } from 'react-loader-spinner';
+import { CirclesWithBar } from "react-loader-spinner";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import Link from "next/link";
 
@@ -15,7 +15,7 @@ export default function Recipe() {
   // state for fetched instruction by ai-flow
   const [instructions, setInstructions] = useState<Instrcutions | null>(null);
   // loading state for screen updates
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   /**
    * reloads the instructions from AI
@@ -55,7 +55,7 @@ export default function Recipe() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-2">
-      {loading && 
+      {loading && (
         <div className="flex flex-col items-center w-full gap-3">
           <CirclesWithBar
             height="100"
@@ -68,29 +68,27 @@ export default function Recipe() {
             wrapperStyle={{}}
             wrapperClass=""
             visible={true}
-            />
+          />
 
-            <p className="text-text-muted text-sm">
-              Loading instructions...
-            </p>
+          <p className="text-text-muted text-sm">Loading instructions...</p>
         </div>
-      }
+      )}
 
-      {instructions && !loading && <InstructionPanel instructions={instructions} />}
+      {instructions && !loading && (
+        <InstructionPanel instructions={instructions} />
+      )}
     </div>
   );
 }
 
-
 function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
-
   if (!instructions) return <p>Loading...</p>;
 
   return (
     <div className="card overflow-auto p-0 sm:max-w-140 max-w-none">
       <div className="border-b border-b-border mb-4 pb-2">
         <Link href="/">
-          <IoArrowBackCircleOutline className="fill-text-muted text-2xl"/>
+          <IoArrowBackCircleOutline className="fill-text-muted text-2xl" />
         </Link>
       </div>
       <p className="text-lg">{instructions.name}</p>
