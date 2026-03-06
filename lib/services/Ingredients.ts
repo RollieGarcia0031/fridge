@@ -35,3 +35,50 @@ export async function getAllIngredients(): Promise<Ingredient[]> {
   if (error) throw new Error(error.message);
   return data;
 }
+
+/**
+ * Save a new ingredient in the user's inventory
+ * 
+ * @param ingredient_id primary key of the ingredient
+ * @returns 
+ */
+export async function saveIngredient(ingredient_id: string):Promise<OwnedIngredient>{
+  const refreshToken = await supabase.auth.getSession();
+
+  if (!refreshToken.data.session) throw new Error("Failed to retrieve session");
+
+  const res = await fetch("/api/ingredients/user",{
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
+    },
+    body: JSON.stringify({ ingredient_id })
+  })
+
+  if (!res.ok) throw new Error("Failed to save ingredient");
+
+  return (await res.json()).ingredient;
+}
+
+/**
+ * Remove a single ingredient from a user's inventory
+ * 
+ * @param id primary key of ingredient from user's inventory
+ */
+export async function removeIngredient(id: string){
+  const refreshToken = await supabase.auth.getSession();
+
+  const res = await fetch("/api/ingredients/user",{
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
+    },
+    body: JSON.stringify({
+      id
+    })
+  });
+
+  if (res.status !== 200) throw new Error("Failed to remove ingredient");
+}

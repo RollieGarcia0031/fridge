@@ -61,7 +61,13 @@ interface DashboardContextProps {
   /**
    * resets the list of available ingredients for all users
    */
-  RefreshIngredientList: () => Promise<void>
+  RefreshIngredientList: () => Promise<void>;
+
+  /**
+   * state for loading while adding an ingredient
+   */
+  isLoadingAddIngredient: boolean;
+  setIsLoadingAddIngredient: (isLoadingAddIngredient: boolean) => void;
 }
 
 export const DashboardContext = createContext<DashboardContextProps | undefined>(undefined!);
@@ -89,6 +95,9 @@ export function DashboardProvider({children}:{
 
   // state for loading suggestion from AI
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+
+  // state for loading while adding an ingredient
+  const [isLoadingAddIngredient, setIsLoadingAddIngredient] = useState(false);
 
 
   /**
@@ -149,7 +158,9 @@ export function DashboardProvider({children}:{
       setIsLoadingResponse,
       refreshRecommendedRecipes,
       fetchOwnedIngredients,
-      RefreshIngredientList
+      RefreshIngredientList,
+      isLoadingAddIngredient,
+      setIsLoadingAddIngredient
     }}>
       {children}
     </DashboardContext.Provider>

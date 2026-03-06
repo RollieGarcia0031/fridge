@@ -5,10 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
 import SuggestedDialog from "@/components/SuggestedDialog";
-import { TailSpin } from "react-loader-spinner";
+import { Oval, TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardContext, DashboardProvider } from "@/context/DashboardContext";
 import Select, { StylesConfig } from 'react-select';
+import { removeIngredient, saveIngredient } from "@/lib/services/Ingredients";
+import { toast } from "react-toastify";
 
 export default function Dashboard(){
   return (
@@ -28,7 +30,10 @@ function Home() {
     refreshRecommendedRecipes,
     fetchOwnedIngredients,
     RefreshIngredientList,
-    ownedIngredients
+    ownedIngredients,
+    setOwnedIngredients,
+    isLoadingAddIngredient,
+    setIsLoadingAddIngredient
   } = useDashboardContext()!;
 
   useEffect(()=>{
@@ -115,10 +120,28 @@ function Home() {
           <div className="mt-4 gap-2 flex flex-row items-center">
             {/* add button */}
             <button
-              onClick={e=>saveIngredient()}
-              className="flex-1 bg-bg-light border-border border border-solid w-full sm:w-80
-              py-2 px-4 rounded-sm hover:bg-highlight duration-150">
-              Add
+              onClick={e=>handleSaveIngredient()}
+              disabled={isLoadingAddIngredient}
+              className="flex flex-row items-center justify-center gap-2
+              bg-bg-light border-border border border-solid w-full sm:w-80
+              py-2 px-4 rounded-sm hover:bg-highlight duration-150
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-bg-light disabled:text-text-muted disabled:border-border-muted"
+              >
+
+              {isLoadingAddIngredient &&
+                <Oval
+                  visible={true}
+                  height="20"
+                  width="20"
+                  strokeWidth="7"
+                  color="#4fa94d"
+                  ariaLabel="oval-loading"
+                  wrapperStyle={{}}
+                  wrapperClass=""
+                />
+              }
+
+              <span>Add</span>
             </button>
 
             {/* show suggestion dialog button */}
@@ -142,31 +165,17 @@ function Home() {
   /**
    * Save a new ingredients in the user's datbase
    */
-  async function saveIngredient(){
+  async function handleSaveIngredient(){
     try {
-      const refreshToken = await supabase.auth.getSession();
-
-      if (!refreshToken.data.session) return;
-
-      const res = await fetch("/api/ingredients/user",{
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          ingredient_id: selectedIngredientId
-        })
-      })
-
-      if (!res.ok) return console.log(await res.text());
-
-      const data = await res.json();
-
+      setIsLoadingAddIngredient(true);
+      const newOwnedIngredient = await saveIngredient(selectedIngredientId);
+      setOwnedIngredients([...ownedIngredients, newOwnedIngredient]);
       setSelectedIngredientId("");
-      fetchOwnedIngredients();
     } catch (error){
       console.log(error);
+      toast.error("Failed to save ingredient");
+    } finally {
+      setIsLoadingAddIngredient(false);
     }
   }
 
@@ -240,7 +249,7 @@ function OwnedIngredientsPane() {
               >
                 <p>{ownedIngredient.ingredient.name}</p>
 
-                <button onClick={()=>removeIngredient(ownedIngredient.id)}>
+                <button onClick={()=>handleRemoveIngredient(ownedIngredient.id)}>
                   <IoIosCloseCircleOutline className="text-lg fill-warning" />
                 </button>
               </motion.div>
@@ -255,28 +264,16 @@ function OwnedIngredientsPane() {
    * Removes an owned ingredient from user's database
    * @param id 
    */
-  async function removeIngredient(id: string){
+  async function handleRemoveIngredient(id: string){
     try{
-
-      const refreshToken = await supabase.auth.getSession();
-
-      const res = await fetch("/api/ingredients/user",{
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          id
-        })
-      });
-
-      if (res.status !== 200) throw new Error("Failed to remove ingredient");
-
+      removeIngredient(id);
       const newOwnedIngredients = ownedIngredients.filter((ownedIngredient) => ownedIngredient.id !== id);    
       setOwnedIngredients(newOwnedIngredients);
     } catch (error) {
       console.error(error);
+      toast("Error removing ingredient", {
+        type: "error"
+      })
     }
 
   }
