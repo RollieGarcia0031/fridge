@@ -40,11 +40,12 @@ export async function getAllIngredients(): Promise<Ingredient[]> {
  * Save a new ingredient in the user's inventory
  * 
  * @param ingredient_id primary key of the ingredient
+ * @returns 
  */
-export async function saveIngredient(ingredient_id: string){
+export async function saveIngredient(ingredient_id: string):Promise<OwnedIngredient>{
   const refreshToken = await supabase.auth.getSession();
 
-  if (!refreshToken.data.session) return;
+  if (!refreshToken.data.session) throw new Error("Failed to retrieve session");
 
   const res = await fetch("/api/ingredients/user",{
     method: "POST",
@@ -56,6 +57,8 @@ export async function saveIngredient(ingredient_id: string){
   })
 
   if (!res.ok) throw new Error("Failed to save ingredient");
+
+  return (await res.json()).ingredient;
 }
 
 /**

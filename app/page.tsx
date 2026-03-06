@@ -30,7 +30,8 @@ function Home() {
     refreshRecommendedRecipes,
     fetchOwnedIngredients,
     RefreshIngredientList,
-    ownedIngredients
+    ownedIngredients,
+    setOwnedIngredients
   } = useDashboardContext()!;
 
   useEffect(()=>{
@@ -146,9 +147,9 @@ function Home() {
    */
   async function handleSaveIngredient(){
     try {
-      await saveIngredient(selectedIngredientId);
+      const newOwnedIngredient = await saveIngredient(selectedIngredientId);
+      setOwnedIngredients([...ownedIngredients, newOwnedIngredient]);
       setSelectedIngredientId("");
-      fetchOwnedIngredients();
     } catch (error){
       console.log(error);
       toast.error("Failed to save ingredient");
