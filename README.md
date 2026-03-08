@@ -1,6 +1,9 @@
-This is a personal project, that helps user decide what to have a
-meal plan, with a given parameters such as budget, and desired goal
+# Fridge
 
-It will also use different AI models to experiment generating different meals.
+Fridge is a personal project that helps users decide meals based on constraints such as budget and goals. It also experiments with AI-powered meal generation.
 
-HAVE FUN!
+## API Documentation
+
+A practical API reference for all current route handlers lives at:
+
+- [`app/api/README.md`](app/api/README.md)
