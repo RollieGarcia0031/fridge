@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-toastify";
@@ -82,7 +82,7 @@ export default function Login() {
     try {
       setIsLoading(true);
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await getSupabaseClient().auth.signInWithPassword({
         email,
         password,
       });

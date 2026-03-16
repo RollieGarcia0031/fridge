@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";

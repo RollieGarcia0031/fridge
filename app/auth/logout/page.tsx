@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase/client"
+import { getSupabaseClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation";
 import { Puff } from "react-loader-spinner";
 
@@ -11,7 +11,7 @@ export default function Logout(){
 
   useEffect(()=>{
     const logout = async ()=>{
-      await supabase.auth.signOut();
+      await getSupabaseClient().auth.signOut();
       router.push("/auth/login");
     }
 

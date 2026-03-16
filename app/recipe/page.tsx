@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { CirclesWithBar } from "react-loader-spinner";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import Link from "next/link";
@@ -123,7 +123,7 @@ function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
  * @param recipe - saved recipe in the sessionStorage, that is assumed to be selected by the user
  */
 async function fetchInstruction(recipe: Recipe): Promise<Instrcutions> {
-  const refreshToken = await supabase.auth.getSession();
+  const refreshToken = await getSupabaseClient().auth.getSession();
 
   const response = await fetch("/api/ai/meal-recipe", {
     method: "POST",
