@@ -37,6 +37,15 @@ This app uses both **client-exposed** and **server-only** variables.
 
 ---
 
+
+## Database (Supabase standard layout)
+
+Database schema and seed SQL are managed in the `/supabase` folder:
+
+- [`supabase/migrations/`](supabase/migrations) for schema migrations
+- [`supabase/seed.sql`](supabase/seed.sql) for local/dev seed data
+- [`supabase/README.md`](supabase/README.md) for structure and workflow
+
 ## Run Manually (Local Development)
 
 ### Prerequisites
