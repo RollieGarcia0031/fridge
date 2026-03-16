@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { useState } from "react";
@@ -74,7 +74,7 @@ export default function SignUp() {
       const formData = new FormData(e.currentTarget);
       const { email, password }: any = Object.fromEntries(formData);
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await getSupabaseClient().auth.signUp({
         email,
         password,
       });

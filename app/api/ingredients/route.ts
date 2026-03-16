@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 /**
  * get list of all ingredients available in the system
  *
@@ -20,6 +20,8 @@ import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const search = searchParams.get("search")?.toLowerCase()
+
+  const supabase = getSupabaseAdminClient()
 
   let query = supabase
     .from("ingredients")
