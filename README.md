@@ -71,9 +71,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-> Note: `docker compose` now passes `NEXT_PUBLIC_SUPABASE_URL` and
-> `NEXT_PUBLIC_SUPABASE_ANON_KEY` as **build args** so `next build` can prerender
-> successfully inside the image build stage.
+> Note: public Supabase vars are injected at runtime, so you do not need to pass Docker build args for `NEXT_PUBLIC_SUPABASE_*`.
 
 Then open: <http://localhost:3000>
 

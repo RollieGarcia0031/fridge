@@ -2,11 +2,19 @@ import { createBrowserClient } from '@supabase/ssr'
 
 let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
 
+function getPublicEnv(name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY') {
+  if (typeof window !== 'undefined' && window.__ENV?.[name]) {
+    return window.__ENV[name]
+  }
+
+  return process.env[name]
+}
+
 export function getSupabaseClient() {
   if (supabaseClient) return supabaseClient
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = getPublicEnv('NEXT_PUBLIC_SUPABASE_URL')
+  const anonKey = getPublicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
 
   if (!url || !anonKey) {
     throw new Error(
