@@ -1,0 +1,34 @@
+# VCS
+.git
+.gitignore
+
+# Node / build output
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+
+# local configs
+.vscode
+.idea
+.DS_Store
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# environment and secrets
+.env
+.env.*
+!.env.example
+
+# docs and misc not needed in image build context
+plan.txt
+
+# gen-ai
+.genkit/*
+.genkit
