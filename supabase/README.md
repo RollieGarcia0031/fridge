@@ -44,3 +44,70 @@ supabase db push
 
 - `db reset` recreates local DB, runs all migrations, then seeds.
 - `db push` applies new local migrations to the linked project.
+
+## Updating the database schema
+
+Whenever you change the app in a way that requires a database change (new table, new column,
+new policy, etc.), use a migration so every environment can be updated consistently.
+
+1. Create a migration after making schema changes locally:
+
+   ```bash
+   supabase migration new <descriptive_name>
+   ```
+
+   Then add the SQL for the change in the generated file under `supabase/migrations/`.
+
+2. Validate the migration locally:
+
+   ```bash
+   supabase db reset
+   ```
+
+   This ensures the full migration history (plus seed) still works from scratch.
+
+3. Apply new migrations to the linked remote project:
+
+   ```bash
+   supabase db push
+   ```
+
+## Rolling back database changes
+
+Supabase migrations are forward-only by default, so rollbacks are done by creating a new
+"revert" migration instead of deleting or editing migrations that were already applied.
+
+### Recommended rollback flow
+
+1. Create a new migration that reverses the bad change:
+
+   ```bash
+   supabase migration new revert_<descriptive_name>
+   ```
+
+2. Add SQL that undoes the previous migration (for example: drop the new column, restore a
+   previous constraint, recreate dropped objects).
+
+3. Test the full chain locally:
+
+   ```bash
+   supabase db reset
+   ```
+
+4. Push the revert migration:
+
+   ```bash
+   supabase db push
+   ```
+
+### Local-only rollback while developing
+
+If the migration is not pushed/shared yet, you can edit or remove the local migration file and
+run:
+
+```bash
+supabase db reset
+```
+
+Do **not** rewrite migration history that has already been applied to shared environments;
+always use a new revert migration in that case.
