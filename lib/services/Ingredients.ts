@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 /**
  * Retrieve all of the ingredients in the user's inventory
@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase/client";
  */
 export async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
 
-  const refreshToken = await supabase.auth.getSession();
+  const refreshToken = await getSupabaseClient().auth.getSession();
 
   const res = await fetch("/api/ingredients/user",{
     method: "GET",
@@ -31,7 +31,7 @@ export async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
  * @returns 
  */
 export async function getAllIngredients(): Promise<Ingredient[]> {
-  const { data, error } = await supabase.from("ingredients").select("*");
+  const { data, error } = await getSupabaseClient().from("ingredients").select("*");
   if (error) throw new Error(error.message);
   return data;
 }
@@ -43,7 +43,7 @@ export async function getAllIngredients(): Promise<Ingredient[]> {
  * @returns 
  */
 export async function saveIngredient(ingredient_id: string):Promise<OwnedIngredient>{
-  const refreshToken = await supabase.auth.getSession();
+  const refreshToken = await getSupabaseClient().auth.getSession();
 
   if (!refreshToken.data.session) throw new Error("Failed to retrieve session");
 
@@ -67,7 +67,7 @@ export async function saveIngredient(ingredient_id: string):Promise<OwnedIngredi
  * @param id primary key of ingredient from user's inventory
  */
 export async function removeIngredient(id: string){
-  const refreshToken = await supabase.auth.getSession();
+  const refreshToken = await getSupabaseClient().auth.getSession();
 
   const res = await fetch("/api/ingredients/user",{
     method: "DELETE",

@@ -71,6 +71,8 @@ cp .env.example .env
 docker compose up --build
 ```
 
+> Note: public Supabase vars are injected at runtime, so you do not need to pass Docker build args for `NEXT_PUBLIC_SUPABASE_*`.
+
 Then open: <http://localhost:3000>
 
 ### Stop containers

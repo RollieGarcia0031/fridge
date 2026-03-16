@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 /**
  * Generate 5 recipes based on the ingredients in the user's inventory
@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase/client";
  */
 export async function getRecommendedMeals(): Promise<Recipe[]> {
 
-  const refreshToken = await supabase.auth.getSession();
+  const refreshToken = await getSupabaseClient().auth.getSession();
 
     const res = await fetch("/api/ai/meal-ideas",{
       method:"POST",
