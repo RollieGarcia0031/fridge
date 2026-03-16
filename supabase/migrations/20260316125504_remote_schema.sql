@@ -1,407 +1,66 @@
+-- Fridge baseline schema (managed by Supabase migrations)
 
+-- Required for gen_random_uuid()
+create extension if not exists pgcrypto;
 
+create table if not exists public.ingredients (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  normalized_name text not null,
+  category text,
+  created_at timestamptz not null default now()
+);
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
+create unique index if not exists ingredients_normalized_name_unique
+  on public.ingredients (normalized_name);
 
+create table if not exists public.user_ingredients (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  ingredient_id uuid not null references public.ingredients(id) on delete cascade,
+  quantity text,
+  expires_at date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 
-COMMENT ON SCHEMA "public" IS 'standard public schema';
+create unique index if not exists user_ingredient_unique
+  on public.user_ingredients (user_id, ingredient_id);
 
+create index if not exists idx_user_ingredients_user
+  on public.user_ingredients (user_id);
 
+create index if not exists idx_user_ingredients_ingredient
+  on public.user_ingredients (ingredient_id);
 
-CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
+alter table public.ingredients enable row level security;
+alter table public.user_ingredients enable row level security;
 
+drop policy if exists "Read ingredients" on public.ingredients;
+create policy "Read ingredients"
+  on public.ingredients
+  for select
+  using (true);
 
+drop policy if exists "Users manage their ingredients" on public.user_ingredients;
+create policy "Users manage their ingredients"
+  on public.user_ingredients
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
-
-
-
-CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
-
-
-
-
-
-
-CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
-
-
-
-
-
-
-CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
-
-
-
-
-
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
-
-
-
-
-
-
-CREATE OR REPLACE FUNCTION "public"."update_updated_at"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
-    AS $$
+create or replace function public.update_updated_at()
+returns trigger
+language plpgsql
+as $$
 begin
   new.updated_at = now();
   return new;
 end;
 $$;
 
-
-ALTER FUNCTION "public"."update_updated_at"() OWNER TO "postgres";
-
-SET default_tablespace = '';
-
-SET default_table_access_method = "heap";
-
-
-CREATE TABLE IF NOT EXISTS "public"."ingredients" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "name" "text" NOT NULL,
-    "normalized_name" "text" NOT NULL,
-    "category" "text",
-    "created_at" timestamp with time zone DEFAULT "now"()
-);
-
-
-ALTER TABLE "public"."ingredients" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."user_ingredients" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "user_id" "uuid" NOT NULL,
-    "ingredient_id" "uuid" NOT NULL,
-    "quantity" "text",
-    "expires_at" "date",
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
-);
-
-
-ALTER TABLE "public"."user_ingredients" OWNER TO "postgres";
-
-
-ALTER TABLE ONLY "public"."ingredients"
-    ADD CONSTRAINT "ingredients_pkey" PRIMARY KEY ("id");
-
-
-
-ALTER TABLE ONLY "public"."user_ingredients"
-    ADD CONSTRAINT "user_ingredients_pkey" PRIMARY KEY ("id");
-
-
-
-CREATE INDEX "idx_user_ingredients_ingredient" ON "public"."user_ingredients" USING "btree" ("ingredient_id");
-
-
-
-CREATE INDEX "idx_user_ingredients_user" ON "public"."user_ingredients" USING "btree" ("user_id");
-
-
-
-CREATE UNIQUE INDEX "ingredients_normalized_name_unique" ON "public"."ingredients" USING "btree" ("normalized_name");
-
-
-
-CREATE UNIQUE INDEX "user_ingredient_unique" ON "public"."user_ingredients" USING "btree" ("user_id", "ingredient_id");
-
-
-
-CREATE OR REPLACE TRIGGER "trigger_user_ingredients_updated_at" BEFORE UPDATE ON "public"."user_ingredients" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at"();
-
-
-
-ALTER TABLE ONLY "public"."user_ingredients"
-    ADD CONSTRAINT "user_ingredients_ingredient_id_fkey" FOREIGN KEY ("ingredient_id") REFERENCES "public"."ingredients"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."user_ingredients"
-    ADD CONSTRAINT "user_ingredients_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-CREATE POLICY "Read ingredients" ON "public"."ingredients" FOR SELECT USING (true);
-
-
-
-CREATE POLICY "Users manage their ingredients" ON "public"."user_ingredients" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
-
-
-
-ALTER TABLE "public"."ingredients" ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."user_ingredients" ENABLE ROW LEVEL SECURITY;
-
-
-
-
-ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
-
-
-GRANT USAGE ON SCHEMA "public" TO "postgres";
-GRANT USAGE ON SCHEMA "public" TO "anon";
-GRANT USAGE ON SCHEMA "public" TO "authenticated";
-GRANT USAGE ON SCHEMA "public" TO "service_role";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-GRANT ALL ON FUNCTION "public"."update_updated_at"() TO "anon";
-GRANT ALL ON FUNCTION "public"."update_updated_at"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."update_updated_at"() TO "service_role";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-GRANT ALL ON TABLE "public"."ingredients" TO "anon";
-GRANT ALL ON TABLE "public"."ingredients" TO "authenticated";
-GRANT ALL ON TABLE "public"."ingredients" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."user_ingredients" TO "anon";
-GRANT ALL ON TABLE "public"."user_ingredients" TO "authenticated";
-GRANT ALL ON TABLE "public"."user_ingredients" TO "service_role";
-
-
-
-
-
-
-
-
-
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "service_role";
-
-
-
-
-
-
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "service_role";
-
-
-
-
-
-
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+drop trigger if exists trigger_user_ingredients_updated_at on public.user_ingredients;
+create trigger trigger_user_ingredients_updated_at
+before update on public.user_ingredients
+for each row
+execute function public.update_updated_at();
