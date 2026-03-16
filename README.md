@@ -71,6 +71,10 @@ cp .env.example .env
 docker compose up --build
 ```
 
+> Note: `docker compose` now passes `NEXT_PUBLIC_SUPABASE_URL` and
+> `NEXT_PUBLIC_SUPABASE_ANON_KEY` as **build args** so `next build` can prerender
+> successfully inside the image build stage.
+
 Then open: <http://localhost:3000>
 
 ### Stop containers
