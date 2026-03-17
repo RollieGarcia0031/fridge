@@ -1,58 +1,70 @@
-import { genkit, z } from "genkit";
-import { googleAI } from "@genkit-ai/google-genai";
+import { z } from "genkit";
 import { ai } from "./genkit";
 
-const inputSchema = z.object({
-  recipe_name: z.string().describe("the name of the dish"),
-  ingredients: z.array(z.string()).describe("The required ingredients to cook the generated dish"),
-}).describe("generated recipe from the given ingredients");
+export const getFullRecipeInputSchema = z
+  .object({
+    recipe_name: z.string().describe("The dish name"),
+    ingredients: z
+      .array(z.string())
+      .min(1)
+      .describe("Ingredients that can be used for the dish"),
+  })
+  .describe("Recipe details used to generate complete cooking instructions");
 
-const outputSchema = z.object({
-  name: z.string(),
-  servings: z.number(),
-  cook_time_minutes: z.number(),
+export const getFullRecipeOutputSchema = z.object({
+  name: z.string().describe("The dish name"),
+  servings: z.number().describe("Number of servings"),
+  cook_time_minutes: z.number().describe("Estimated cooking time in minutes"),
   ingredients: z.array(
     z.object({
-      name: z.string(),
-      quantity: z.string().optional()
+      name: z.string().describe("Ingredient name"),
+      quantity: z.string().optional().describe("Ingredient quantity"),
     })
   ),
   steps: z.array(
     z.object({
-      order: z.number(),
-      title: z.string(),
-      instruction: z.string()
+      order: z.number().describe("Step number"),
+      title: z.string().describe("Short step title"),
+      instruction: z.string().describe("Instruction for this step"),
     })
   ),
-  tips: z.array(z.string()),
-  warnings: z.array(z.string()).optional()
+  tips: z.array(z.string()).describe("Helpful cooking tips"),
+  warnings: z.array(z.string()).optional().describe("Safety or allergy warnings"),
 });
+
+type GetFullRecipeInput = z.infer<typeof getFullRecipeInputSchema>;
+
+const buildGetFullRecipePrompt = ({
+  recipe_name,
+  ingredients,
+}: GetFullRecipeInput) => `
+You are a JSON-only cooking API.
+
+Generate a complete cooking guide for "${recipe_name}" using ONLY these ingredients:
+${ingredients.join(", ")}
+
+Return only JSON that matches the provided schema.
+`;
 
 /**
- * Generates a complete step by step process on how to cook a dish
- * based on a given array of ingredients, and a name of dish
- * to be cooked
+ * Generates complete step-by-step instructions for a selected dish.
  */
-export const getFullRecipeFlow = ai.defineFlow({
-  name: 'getFullRecipeFlow',
-  inputSchema,
-  outputSchema,
-}, async (input)=>{
-  const prompt = `
-    You are a JSON API.
+export const getFullRecipeFlow = ai.defineFlow(
+  {
+    name: "getFullRecipeFlow",
+    inputSchema: getFullRecipeInputSchema,
+    outputSchema: getFullRecipeOutputSchema,
+  },
+  async (input) => {
+    const { output } = await ai.generate({
+      prompt: buildGetFullRecipePrompt(input),
+      output: { schema: getFullRecipeOutputSchema },
+    });
 
-      Generate cooking intruction for ${input.recipe_name} using ONLY the given ingredients.
+    if (!output) {
+      throw new Error("Failed to generate full recipe instructions");
+    }
 
-      Ingredients:
-      ${input.ingredients.join(", ")}
-    `;
-
-  const { output } = await ai.generate({
-    prompt,
-    output: { schema: outputSchema }
-  });
-
-  if (!output) throw new Error("Failed to get full instructions");
-
-  return output;
-});
+    return output;
+  }
+);
