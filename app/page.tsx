@@ -1,7 +1,6 @@
 "use client";
 
-import { getSupabaseClient } from "@/lib/supabase/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
 import SuggestedDialog from "@/components/SuggestedDialog";
@@ -11,8 +10,8 @@ import {
   useDashboardContext,
   DashboardProvider,
 } from "@/context/DashboardContext";
-import Select, { StylesConfig } from "react-select";
-import { removeIngredient, saveIngredient } from "@/lib/services/Ingredients";
+import Select from "react-select";
+import { saveIngredient, removeIngredient } from "@/lib/services/Ingredients";
 import { toast } from "react-toastify";
 
 export default function Dashboard() {
@@ -44,135 +43,143 @@ function Home() {
     fetchOwnedIngredients();
   }, []);
 
-  /**
-   * Filter the ingredients list to remove the owned ingredients
-   *
-   * it is to make sure that the user can't add the same ingredient twice
-   */
   const filteredIngredients = ingredients.filter((ingredient) => {
     return !ownedIngredients.some(
       (ownedIngredient) => ownedIngredient.ingredient.id === ingredient.id,
     );
   });
 
-  /**
-   * Convert the ingredients list into a list of options for the select input
-   */
-  const options = filteredIngredients.map((i) => {
-    return {
-      value: i.id,
-      label: i.name,
-    };
-  });
+  const options = filteredIngredients.map((i) => ({
+    value: i.id,
+    label: i.name,
+  }));
 
   const colorStyle = {
-    control: (styles: any) => ({
-      ...styles,
-      backgroundColor: "var(--bg-light)",
-      borderColor: "var(--border-muted)",
-      color: "var(--text-muted)",
+    control: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: "var(--bg-subtle)",
+      borderColor: state.isFocused ? "var(--primary)" : "var(--border)",
+      borderRadius: "var(--radius-md)",
+      padding: "2px",
+      boxShadow: state.isFocused ? "0 0 0 2px var(--ring)" : "none",
+      "&:hover": {
+        borderColor: "var(--primary)",
+      },
     }),
-    menu: (styles: any) => ({
-      ...styles,
-      backgroundColor: "var(--bg-light)",
-      color: "var(--text-muted)",
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? "var(--primary)"
+        : state.isFocused
+        ? "var(--bg-subtle)"
+        : "transparent",
+      color: state.isSelected ? "white" : "var(--text)",
+      cursor: "pointer",
+      "&:active": {
+        backgroundColor: "var(--primary)",
+      },
     }),
-    option: (styles: any) => ({
-      ...styles,
-      backgroundColor: "var(--bg-light)",
-      color: "var(--text-muted)",
+    menu: (base: any) => ({
+      ...base,
+      backgroundColor: "var(--bg-card)",
+      border: "1px solid var(--border)",
+      borderRadius: "var(--radius-md)",
+      backdropFilter: "blur(8px)",
     }),
-    singleValue: (styles: any) => ({
-      ...styles,
-      color: "var(--text-muted)",
+    singleValue: (base: any) => ({
+      ...base,
+      color: "var(--text)",
     }),
-    input: (styles: any) => ({
-      ...styles,
+    input: (base: any) => ({
+      ...base,
       color: "var(--text)",
     }),
   };
 
-  /**
-   * updates the state for the selected ingredient
-   */
   const handleIngredientChange = (selectedOption: any) => {
-    setSelectedIngredientId(selectedOption.value);
+    setSelectedIngredientId(selectedOption?.value || "");
   };
 
   const selectedIngredient = ingredients.find(
     (ingredient) => ingredient.id === selectedIngredientId,
   );
+
   return (
     <>
-      <div
-        className="p-4
-      flex flex-col items-center justify-center
-      sm:px-8 overflow-hidden"
-      >
-        <div className="flex flex-col flex-1 w-full sm:w-88 max-w-lg gap-8 h-full">
-          <fieldset>
-            {/* select input */}
+      <main className="max-w-4xl mx-auto px-4 py-12 w-full">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-10"
+        >
+          <div className="text-center space-y-4">
+            <h1 className="bg-linear-to-br from-text to-primary bg-clip-text text-transparent">
+              Kitchen Inventory
+            </h1>
+            <p className="text-text-muted text-lg max-w-[500px] mx-auto">
+              Scan your fridge by adding ingredients you have. We'll suggest great recipes for you.
+            </p>
+          </div>
 
-            <div className="w-full">
-              <Select
-                instanceId="ingredientSelector"
-                options={options}
-                styles={colorStyle}
-                value={{
-                  label: selectedIngredient?.name,
-                  value: selectedIngredient?.id,
-                }}
-                onChange={handleIngredientChange}
-              />
-            </div>
-
-            <div className="mt-4 gap-2 flex flex-row items-center">
-              {/* add button */}
-              <button
-                onClick={(e) => handleSaveIngredient()}
-                disabled={isLoadingAddIngredient}
-                className="flex flex-row items-center justify-center gap-2
-              bg-bg-light border-border border border-solid w-full sm:w-80
-              py-2 px-4 rounded-sm hover:bg-highlight duration-150
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-bg-light disabled:text-text-muted disabled:border-border-muted"
-              >
-                {isLoadingAddIngredient && (
-                  <Oval
-                    visible={true}
-                    height="20"
-                    width="20"
-                    strokeWidth="7"
-                    color="#4fa94d"
-                    ariaLabel="oval-loading"
-                    wrapperStyle={{}}
-                    wrapperClass=""
+          <div className="grid md:grid-cols-5 gap-8">
+            {/* Control Panel */}
+            <div className="md:col-span-2 space-y-6">
+              <div className="card p-6 bg-linear-to-br from-bg-card to-bg-subtle/30 shadow-xl border-white/10">
+                <h3 className="mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-accent rounded-full" />
+                  Add Ingredient
+                </h3>
+                <div className="space-y-4">
+                  <Select
+                    instanceId="ingredientSelector"
+                    options={options}
+                    styles={colorStyle}
+                    value={
+                      selectedIngredient
+                        ? { label: selectedIngredient.name, value: selectedIngredient.id }
+                        : null
+                    }
+                    onChange={handleIngredientChange}
+                    placeholder="Search ingredients..."
                   />
-                )}
 
-                <span>Add</span>
-              </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSaveIngredient()}
+                      disabled={isLoadingAddIngredient || !selectedIngredientId}
+                      className="btn btn-primary flex-1 h-12 text-base"
+                    >
+                      {isLoadingAddIngredient ? (
+                        <Oval visible height="20" width="20" color="currentColor" />
+                      ) : (
+                        "Add to Fridge"
+                      )}
+                    </button>
 
-              {/* show suggestion dialog button */}
-              <button
-                onClick={() => openSuggestedIngredients()}
-                className="bg-primary p-2 rounded-xl hover:bg-secondary duration-150"
-              >
-                <VscDebugContinue className="dark:fill-black fill-white text-2xl" />
-              </button>
+                    <button
+                      onClick={() => openSuggestedIngredients()}
+                      className="btn btn-secondary p-3 aspect-square"
+                      title="Generate Recipes"
+                    >
+                      <VscDebugContinue className="text-2xl text-primary" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </fieldset>
 
-          <OwnedIngredientsPane />
-        </div>
-      </div>
+            {/* Ingredients List */}
+            <div className="md:col-span-3">
+              <OwnedIngredientsPane />
+            </div>
+          </div>
+        </motion.div>
+      </main>
 
       <SuggestedDialog />
     </>
   );
 
-  /**
-   * Save a new ingredients in the user's datbase
-   */
   async function handleSaveIngredient() {
     try {
       setIsLoadingAddIngredient(true);
@@ -180,17 +187,13 @@ function Home() {
       setOwnedIngredients([...ownedIngredients, newOwnedIngredient]);
       setSelectedIngredientId("");
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error("Failed to save ingredient");
     } finally {
       setIsLoadingAddIngredient(false);
     }
   }
 
-  /**
-   * Open the suggested ingredients dialog which contains
-   * the 5 recommended recipes
-   */
   function openSuggestedIngredients() {
     suggestionDialogRef.current?.showModal();
     if (suggestedRecipes.length === 0) {
@@ -199,90 +202,69 @@ function Home() {
   }
 }
 
-/**
- * Contains the ingredients owned by the user
- */
 function OwnedIngredientsPane() {
   const { setOwnedIngredients, ownedIngredients, isLoadingOwnedIngredients } =
     useDashboardContext()!;
 
   return (
-    <div className="flex-1 flex flex-col">
-      {
-        /** message for empty ingredients list */
-        !isLoadingOwnedIngredients && ownedIngredients.length === 0 && (
-          <p>No ingredients owned</p>
-        )
-      }
+    <div className="card p-6 h-full flex flex-col min-h-[400px]">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-primary rounded-full" />
+          On Your Shelf
+        </h3>
+        <span className="text-xs font-bold uppercase tracking-wider text-text-muted px-2 py-1 bg-border rounded-md">
+          {ownedIngredients.length} Items
+        </span>
+      </div>
 
-      {/* container for owned ingredients */}
-      <div className="card flex-cl flex-1 max-h-100 sm:max-h-full gap-2 overflow-y-auto">
-        {!isLoadingOwnedIngredients && ownedIngredients.length > 0 && (
-          <p className="text-primary font-semibold mb-4">Owned Ingredients:</p>
-        )}
-
-        {
-          /** loading indicator */
-          isLoadingOwnedIngredients && (
-            <div className="w-full flex-cc">
-              <TailSpin
-                visible={true}
-                height="80"
-                width="80"
-                color="#5e03fc"
-                ariaLabel="tail-spin-loading"
-                radius="1"
-                wrapperStyle={{}}
-                wrapperClass=""
-              />
+      <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+        {isLoadingOwnedIngredients ? (
+          <div className="h-full flex items-center justify-center">
+            <TailSpin height="40" width="40" color="var(--primary)" />
+          </div>
+        ) : ownedIngredients.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center opacity-50 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-bg-subtle flex items-center justify-center text-2xl">
+              🥘
             </div>
-          )
-        }
-
-        <div className="flex-1 flex flex-col items-start gap-2">
-          <AnimatePresence>
-            {ownedIngredients?.map((ownedIngredient) => (
-              /** each owned ingredient */
-              <motion.div
-                key={ownedIngredient.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
-                className="flex-rl gap-2 border-border border border-solid
-                  py-1 px-2 rounded-xl dark:hover:bg-highlight bg-bg-dark duration-150"
-              >
-                <p>{ownedIngredient.ingredient.name}</p>
-
-                <button
-                  onClick={() => handleRemoveIngredient(ownedIngredient.id)}
+            <p>Your fridge is empty.<br />Start by adding some items!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <AnimatePresence mode="popLayout">
+              {ownedIngredients.map((ownedIngredient) => (
+                <motion.div
+                  layout
+                  key={ownedIngredient.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="group flex items-center justify-between p-3 bg-bg-subtle border border-border rounded-xl hover:border-primary/50 hover:bg-bg transition-colors"
                 >
-                  <IoIosCloseCircleOutline className="text-lg fill-warning" />
-                </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                  <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
+                  <button
+                    onClick={() => handleRemoveIngredient(ownedIngredient.id)}
+                    className="p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  >
+                    <IoIosCloseCircleOutline className="text-xl text-text-muted hover:text-red-500" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );
 
-  /**
-   * Removes an owned ingredient from user's database
-   * @param id
-   */
   async function handleRemoveIngredient(id: string) {
     try {
       removeIngredient(id);
-      const newOwnedIngredients = ownedIngredients.filter(
-        (ownedIngredient) => ownedIngredient.id !== id,
-      );
-      setOwnedIngredients(newOwnedIngredients);
+      setOwnedIngredients(ownedIngredients.filter((oi) => oi.id !== id));
     } catch (error) {
       console.error(error);
-      toast("Error removing ingredient", {
-        type: "error",
-      });
+      toast.error("Error removing ingredient");
     }
   }
 }
