@@ -41,7 +41,12 @@ export async function GET(req: Request) {
     )
   }
 
-  return NextResponse.json({ ingredients: data })
+  const response = NextResponse.json({ ingredients: data })
+  
+  // Cache for 1 hour, allow stale for up to 24 hours
+  response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  
+  return response
 }
 
 
