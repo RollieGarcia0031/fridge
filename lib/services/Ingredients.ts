@@ -1,14 +1,19 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
 
+// Cache variables for client-side persistence within the session
+let allIngredientsCache: Ingredient[] | null = null;
+let ownedIngredientsCache: OwnedIngredient[] | null = null;
+
 /**
  * Retrieve all of the ingredients in the user's inventory
  * 
- * It takes the user's access token from the client side
- * and uses it reference and determine the logged user's inventory
- * 
+ * @param forceRefresh - Whether to bypass the cache and fetch fresh data
  * @returns - List of owned ingredients
  */
-export async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
+export async function getOwnedIngredients(forceRefresh = false): Promise<OwnedIngredient[]> {
+  if (ownedIngredientsCache && !forceRefresh) {
+    return ownedIngredientsCache;
+  }
 
   const refreshToken = await getSupabaseClient().auth.getSession();
 
@@ -16,30 +21,37 @@ export async function getOwnedIngredients(): Promise<OwnedIngredient[]> {
     method: "GET",
     headers:{
       'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
-    }
+    },
+    next: { tags: ['user-ingredients'] }
   });
 
   const data = await res.json();
+  ownedIngredientsCache = data.recipes;
   return data.recipes;
 }
 
 /**
  * Fetch all of the ingredients from the database
  * 
- * It returns all of the available ingredients that users can choose
- * to add to their inventory
+ * @param forceRefresh - Whether to bypass the cache and fetch fresh data
  * @returns 
  */
-export async function getAllIngredients(): Promise<Ingredient[]> {
+export async function getAllIngredients(forceRefresh = false): Promise<Ingredient[]> {
+  if (allIngredientsCache && !forceRefresh) {
+    return allIngredientsCache;
+  }
+
   const { data, error } = await getSupabaseClient().from("ingredients").select("*");
   if (error) throw new Error(error.message);
+  
+  allIngredientsCache = data;
   return data;
 }
 
 /**
  * Save a new ingredient in the user's inventory
  * 
- * @param ingredient_id primary key of the ingredient
+ * @param ingredient_ids array of primary keys of the ingredient
  * @returns 
  */
 export async function saveIngredient(ingredient_ids: string[]):Promise<OwnedIngredient[]>{
@@ -57,6 +69,9 @@ export async function saveIngredient(ingredient_ids: string[]):Promise<OwnedIngr
   })
 
   if (!res.ok) throw new Error("Failed to save ingredient");
+
+  // Invalidate cache since data has changed
+  ownedIngredientsCache = null;
 
   return (await res.json()).ingredients;
 }
@@ -81,4 +96,7 @@ export async function removeIngredient(id: string){
   });
 
   if (res.status !== 200) throw new Error("Failed to remove ingredient");
+
+  // Invalidate cache since data has changed
+  ownedIngredientsCache = null;
 }

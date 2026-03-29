@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { createSupabaseServerClient as supabase } from "@/lib/supabase/server";
 import getUserRecipes from "@/lib/db/getUserRecipes";
 
@@ -113,6 +114,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  revalidateTag("user-ingredients", "max");
+
   // 5. Return result (new added ingredients)
   return NextResponse.json(
     { ingredients: addedIngredients },
@@ -149,6 +152,8 @@ export async function DELETE(req: Request){
       .eq('id', id);
 
     if (query.error) return new NextResponse("cannot delete", {status: 500});
+
+    revalidateTag("user-ingredients", "max");
 
     return NextResponse.json(null, { status: 200 });
   } catch (error){
