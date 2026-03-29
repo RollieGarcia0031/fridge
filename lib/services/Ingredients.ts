@@ -42,7 +42,7 @@ export async function getAllIngredients(): Promise<Ingredient[]> {
  * @param ingredient_id primary key of the ingredient
  * @returns 
  */
-export async function saveIngredient(ingredient_id: string):Promise<OwnedIngredient>{
+export async function saveIngredient(ingredient_ids: string[]):Promise<OwnedIngredient[]>{
   const refreshToken = await getSupabaseClient().auth.getSession();
 
   if (!refreshToken.data.session) throw new Error("Failed to retrieve session");
@@ -53,12 +53,12 @@ export async function saveIngredient(ingredient_id: string):Promise<OwnedIngredi
       "Content-Type": "application/json",
       'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
     },
-    body: JSON.stringify({ ingredient_id })
+    body: JSON.stringify({ ids: ingredient_ids })
   })
 
   if (!res.ok) throw new Error("Failed to save ingredient");
 
-  return (await res.json()).ingredient;
+  return (await res.json()).ingredients;
 }
 
 /**

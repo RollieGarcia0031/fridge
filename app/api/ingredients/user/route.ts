@@ -44,7 +44,7 @@ export async function GET(req: Request){
  *
  * Request:
  * {
- *    id: uuid // primary key of the ingredient in ingredients table
+ *    ids: string[] // array of primary keys of the ingredient
  * }
  */
 export async function POST(req: Request) {
@@ -64,38 +64,38 @@ export async function POST(req: Request) {
 
   // 2. Parse body
   const body = await req.json();
-  const { ingredient_id } = body;
+  const { ids } = body;
 
-  if (!ingredient_id || typeof ingredient_id !== "string") {
+  if (!ids || !Array.isArray(ids)) {
     return NextResponse.json(
-      { error: "ingredient_id is required" },
+      { error: "ids is required" },
       { status: 400 }
     )
   }
 
   // 3. Validate ingredient exists
-  const { data: ingredient, error: ingredientError } = await (await supabase())
+  const { data: ingredients, error: ingredientError } = await (await supabase())
     .from("ingredients")
     .select("id, name, category")
-    .eq("id", ingredient_id)
-    .single();
+    .in("id", ids);
 
-  if (ingredientError || !ingredient) {
+  if (ingredientError || ingredients.length != ids.length) {
     return NextResponse.json(
       { error: "Invalid ingredient_id" },
       { status: 400 }
     )
   }
 
+  const rowsToUpsert = ids.map(ingredient_id => ({
+    user_id: user.id,
+    ingredient_id
+  }));
+
   // 4. Insert into user_ingredients
-  const { data: userIngredient, error } = await (await supabase())
+  const { data: addedIngredients, error } = await (await supabase())
     .from("user_ingredients")
     .upsert(
-      {
-        user_id: user.id,
-        ingredient_id: ingredient.id
-      },
-      {
+      rowsToUpsert, {
         onConflict: "user_id,ingredient_id"
       }
     )
@@ -107,16 +107,15 @@ export async function POST(req: Request) {
         name,
         category
       )
-    `)
-    .single()
+    `);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // 5. Return result
+  // 5. Return result (new added ingredients)
   return NextResponse.json(
-    { ingredient: userIngredient },
+    { ingredients: addedIngredients },
     { status: 201 }
   )
 }

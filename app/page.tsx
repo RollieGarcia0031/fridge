@@ -10,9 +10,14 @@ import {
   useDashboardContext,
   DashboardProvider,
 } from "@/context/DashboardContext";
-import Select from "react-select";
+import Select, { SingleValue } from "react-select";
 import { saveIngredient, removeIngredient } from "@/lib/services/Ingredients";
 import { toast } from "react-toastify";
+
+export interface inputOption {
+  label: string;
+  value: string;
+}
 
 export default function Dashboard() {
   return (
@@ -36,6 +41,8 @@ function Home() {
     setOwnedIngredients,
     isLoadingAddIngredient,
     setIsLoadingAddIngredient,
+    ingredientsToAdd,
+    setIngredientsToAdd
   } = useDashboardContext()!;
 
   useEffect(() => {
@@ -44,12 +51,23 @@ function Home() {
   }, []);
 
   const filteredIngredients = ingredients.filter((ingredient) => {
-    return !ownedIngredients.some(
+
+    const matchedOwnedIngredient =  !ownedIngredients.some(
       (ownedIngredient) => ownedIngredient.ingredient.id === ingredient.id,
     );
+
+    const matchedIngredientToAdd = !ingredientsToAdd.some(
+      (ingredientToAdd) => ingredientToAdd.value === ingredient.id
+    );
+
+    return matchedOwnedIngredient && matchedIngredientToAdd;
   });
 
-  const options = filteredIngredients.map((i) => ({
+  useEffect(()=>{
+
+  }, [ingredientsToAdd]);
+
+  const options: inputOption[] = filteredIngredients.map((i) => ({
     value: i.id,
     label: i.name,
   }));
@@ -96,8 +114,16 @@ function Home() {
     }),
   };
 
-  const handleIngredientChange = (selectedOption: any) => {
-    setSelectedIngredientId(selectedOption?.value || "");
+  const handleIngredientChange = (selectedOption : SingleValue<inputOption>) => {
+
+    selectedOption = selectedOption as inputOption;
+
+    setIngredientsToAdd(selectedIngredients => {
+      const newIngredientsToAdd = [...selectedIngredients, selectedOption]
+      return newIngredientsToAdd;
+    })
+
+    setSelectedIngredientId(selectedOption.value || "");
   };
 
   const selectedIngredient = ingredients.find(
@@ -117,7 +143,7 @@ function Home() {
               Kitchen Inventory
             </h1>
             <p className="text-text-muted text-lg max-w-[500px] mx-auto">
-              Scan your fridge by adding ingredients you have. We'll suggest great recipes for you.
+              Scan your fridge by adding ingredients you have. We&apos;ll suggest great recipes for you.
             </p>
           </div>
 
@@ -164,6 +190,19 @@ function Home() {
                       <VscDebugContinue className="text-2xl text-primary" />
                     </button>
                   </div>
+
+                  <div>
+                    <p>Selected Ingredients:</p>
+                    <ol className="space-y-0.5 m-2">
+                      {ingredientsToAdd?.map(ingredient=> (
+                        <li key={ingredient.value}
+                          className="text-text-muted indent-2"
+                        >
+                          {ingredient.label}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 </div>
               </div>
             </div>
@@ -183,8 +222,12 @@ function Home() {
   async function handleSaveIngredient() {
     try {
       setIsLoadingAddIngredient(true);
-      const newOwnedIngredient = await saveIngredient(selectedIngredientId);
-      setOwnedIngredients([...ownedIngredients, newOwnedIngredient]);
+
+      const selectedIdsToAdd = ingredientsToAdd.map((ingredient) => ingredient.value)
+
+      const newOwnedIngredients = await saveIngredient(selectedIdsToAdd);
+      setOwnedIngredients([...ownedIngredients, ...newOwnedIngredients]);
+      setIngredientsToAdd([]);
       setSelectedIngredientId("");
     } catch (error) {
       console.error(error);

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useRef } from "react";
+import { createContext, useContext, useState, useRef, Dispatch, SetStateAction } from "react";
+import { inputOption } from '@/app/page';
 import {
   getOwnedIngredients,
   getAllIngredients,
@@ -68,6 +69,12 @@ interface DashboardContextProps {
    */
   isLoadingAddIngredient: boolean;
   setIsLoadingAddIngredient: (isLoadingAddIngredient: boolean) => void;
+
+  /**
+   * state for temporarily saving the ingredients selected by the user
+   */
+  ingredientsToAdd: inputOption[];
+  setIngredientsToAdd: Dispatch<SetStateAction<inputOption[]>>
 }
 
 export const DashboardContext = createContext<DashboardContextProps | undefined>(undefined!);
@@ -98,6 +105,9 @@ export function DashboardProvider({children}:{
 
   // state for loading while adding an ingredient
   const [isLoadingAddIngredient, setIsLoadingAddIngredient] = useState(false);
+
+  // state to temporarily store ingredients that the user wants to add
+  const [ ingredientsToAdd, setIngredientsToAdd ] = useState<inputOption[]>([]);
 
 
   /**
@@ -160,7 +170,9 @@ export function DashboardProvider({children}:{
       fetchOwnedIngredients,
       RefreshIngredientList,
       isLoadingAddIngredient,
-      setIsLoadingAddIngredient
+      setIsLoadingAddIngredient,
+      ingredientsToAdd,
+      setIngredientsToAdd
     }}>
       {children}
     </DashboardContext.Provider>
