@@ -191,18 +191,42 @@ function Home() {
                     </button>
                   </div>
 
-                  <div>
-                    <p>Selected Ingredients:</p>
-                    <ol className="space-y-0.5 m-2">
-                      {ingredientsToAdd?.map(ingredient=> (
-                        <li key={ingredient.value}
-                          className="text-text-muted indent-2"
-                        >
-                          {ingredient.label}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  {ingredientsToAdd.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t border-border/50">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                          Selected to Add
+                        </span>
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
+                          {ingredientsToAdd.length}
+                        </span>
+                      </div>
+                      <div className="max-h-[180px] overflow-y-auto pr-1 flex flex-col gap-1.5">
+                        <AnimatePresence>
+                          {ingredientsToAdd.map((ingredient) => (
+                            <motion.div 
+                              layout
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              key={ingredient.value}
+                              className="flex items-center justify-between p-2 bg-bg-subtle/50 border border-border rounded-lg group"
+                            >
+                              <span className="text-sm font-medium">{ingredient.label}</span>
+                              <button
+                                onClick={() => {
+                                  setIngredientsToAdd(prev => prev.filter(i => i.value !== ingredient.value));
+                                }}
+                                className="text-text-muted hover:text-red-500 transition-colors"
+                              >
+                                <IoIosCloseCircleOutline className="text-lg" />
+                              </button>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -250,7 +274,7 @@ function OwnedIngredientsPane() {
     useDashboardContext()!;
 
   return (
-    <div className="card p-6 h-full flex flex-col min-h-[400px]">
+    <div className="card p-6 flex flex-col h-[500px]">
       <div className="flex items-center justify-between mb-6">
         <h3 className="flex items-center gap-2">
           <span className="w-1.5 h-6 bg-primary rounded-full" />
@@ -261,7 +285,7 @@ function OwnedIngredientsPane() {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+      <div className="flex-1 overflow-y-auto pr-2">
         {isLoadingOwnedIngredients ? (
           <div className="h-full flex items-center justify-center">
             <TailSpin height="40" width="40" color="var(--primary)" />
@@ -274,23 +298,23 @@ function OwnedIngredientsPane() {
             <p>Your fridge is empty.<br />Start by adding some items!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <AnimatePresence mode="popLayout">
+          <div className="flex flex-col gap-2">
+            <AnimatePresence>
               {ownedIngredients.map((ownedIngredient) => (
                 <motion.div
                   layout
                   key={ownedIngredient.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="group flex items-center justify-between p-3 bg-bg-subtle border border-border rounded-xl hover:border-primary/50 hover:bg-bg transition-colors"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                  className="flex items-center justify-between p-3 bg-bg-subtle border border-border rounded-lg hover:border-primary/30 transition-colors"
                 >
                   <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
                   <button
                     onClick={() => handleRemoveIngredient(ownedIngredient.id)}
-                    className="p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                    className="p-1 transition-colors text-text-muted hover:text-red-500"
                   >
-                    <IoIosCloseCircleOutline className="text-xl text-text-muted hover:text-red-500" />
+                    <IoIosCloseCircleOutline className="text-xl" />
                   </button>
                 </motion.div>
               ))}
