@@ -86,7 +86,7 @@ body {
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground shadow-lg shadow-primary/10 hover:brightness-110;
+    @apply bg-primary text-primary-foreground shadow-md shadow-primary/10 hover:brightness-90 cursor-pointer;
   }
 
   .btn-secondary {
