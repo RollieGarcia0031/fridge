@@ -6,6 +6,14 @@ This project now keeps database assets in the standard Supabase layout:
 - `seed.sql`: development seed data
 - `config.toml`: local Supabase CLI configuration
 
+## Source of truth
+
+The current canonical schema is the latest migration file:
+
+- `supabase/migrations/20260316125504_remote_schema.sql`
+
+`supabase/schema.sql` is a generated snapshot (useful for inspection), while `db/schema.sql` is deprecated and kept only as a compatibility note.
+
 ## Current schema
 
 The baseline migration creates:
@@ -22,6 +30,43 @@ The baseline migration creates:
    - users can only manage their own `user_ingredients`
 4. Trigger/function
    - `update_updated_at()` keeps `user_ingredients.updated_at` current
+5. Grants/default privileges
+   - schema usage and table/function access are granted to `anon`, `authenticated`, and `service_role`
+   - default privileges are configured for sequences, functions, and tables in `public`
+
+### Table-level reference
+
+#### `public.ingredients`
+
+- Columns:
+  - `id uuid primary key default gen_random_uuid()`
+  - `name text not null`
+  - `normalized_name text not null` (unique)
+  - `category text null`
+  - `created_at timestamptz default now()`
+- Access model:
+  - RLS enabled
+  - policy `"Read ingredients"` allows `SELECT` for all rows
+
+#### `public.user_ingredients`
+
+- Columns:
+  - `id uuid primary key default gen_random_uuid()`
+  - `user_id uuid not null` → `auth.users(id)` (`on delete cascade`)
+  - `ingredient_id uuid not null` → `public.ingredients(id)` (`on delete cascade`)
+  - `quantity text null`
+  - `expires_at date null`
+  - `created_at timestamptz default now()`
+  - `updated_at timestamptz default now()`
+- Constraints/indexes:
+  - unique `(user_id, ingredient_id)`
+  - index on `user_id`
+  - index on `ingredient_id`
+- Access model:
+  - RLS enabled
+  - policy `"Users manage their ingredients"` restricts all operations to rows where `auth.uid() = user_id`
+- Trigger:
+  - `trigger_user_ingredients_updated_at` runs `public.update_updated_at()` before update
 
 ## Seeding
 
