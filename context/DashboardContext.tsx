@@ -74,7 +74,16 @@ interface DashboardContextProps {
    * state for temporarily saving the ingredients selected by the user
    */
   ingredientsToAdd: inputOption[];
-  setIngredientsToAdd: Dispatch<SetStateAction<inputOption[]>>
+  setIngredientsToAdd: Dispatch<SetStateAction<inputOption[]>>;
+
+  /**
+   * handles multiple selected Owned ingredients
+   */
+  selectedOwnedIngredientId: string[];
+  setSelectedOwnedIngredientId: Dispatch<SetStateAction<string[]>>;
+
+  isDeletingOwnedIngredients: boolean;
+  setIsDeletingOwnedIngredients: Dispatch<SetStateAction<boolean>>;
 }
 
 export const DashboardContext = createContext<DashboardContextProps | undefined>(undefined!);
@@ -108,6 +117,12 @@ export function DashboardProvider({children}:{
 
   // state to temporarily store ingredients that the user wants to add
   const [ ingredientsToAdd, setIngredientsToAdd ] = useState<inputOption[]>([]);
+
+  // selected id of the owned ingredients, can be used to delete/edit multiple ingredients at the same time
+  const [ selectedOwnedIngredientId, setSelectedOwnedIngredientId ] = useState<string[]>([]);
+
+  // state to check if owned ingredients are currently being deleted
+  const [ isDeletingOwnedIngredients, setIsDeletingOwnedIngredients ] = useState(false);
 
 
   /**
@@ -172,7 +187,11 @@ export function DashboardProvider({children}:{
       isLoadingAddIngredient,
       setIsLoadingAddIngredient,
       ingredientsToAdd,
-      setIngredientsToAdd
+      setIngredientsToAdd,
+      selectedOwnedIngredientId,
+      setSelectedOwnedIngredientId,
+      isDeletingOwnedIngredients,
+      setIsDeletingOwnedIngredients
     }}>
       {children}
     </DashboardContext.Provider>

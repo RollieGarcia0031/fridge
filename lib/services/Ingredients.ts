@@ -81,7 +81,7 @@ export async function saveIngredient(ingredient_ids: string[]):Promise<OwnedIngr
  * 
  * @param id primary key of ingredient from user's inventory
  */
-export async function removeIngredient(id: string){
+export async function removeIngredients(ids: string[]){
   const refreshToken = await getSupabaseClient().auth.getSession();
 
   const res = await fetch("/api/ingredients/user",{
@@ -91,11 +91,15 @@ export async function removeIngredient(id: string){
       'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
     },
     body: JSON.stringify({
-      id
+      ids
     })
   });
 
-  if (res.status !== 200) throw new Error("Failed to remove ingredient");
+  if (!res.ok){
+    const errorBody = await res.json().catch(()=>({}));
+    const message = errorBody.message || `Error ${res.status}: ${res.statusText}`;
+    throw new Error(message);
+  }
 
   // Invalidate cache since data has changed
   ownedIngredientsCache = null;
