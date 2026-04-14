@@ -128,7 +128,7 @@ export async function POST(req: Request) {
  * 
  * Request:
  * {
- *    id: uuid // the primary id of user_ingredient to be removed 
+ *    ids: uuid[] // the primary id of user_ingredient to be removed ( array of string ) 
  * }
  */
 export async function DELETE(req: Request){
@@ -143,21 +143,26 @@ export async function DELETE(req: Request){
 
     if (error || !user?.id) throw new NextResponse(null, {status: 401});
 
-    const { id } = await req.json();
-    if (!id) return new NextResponse("Incomplete request", {status: 403});
+    const { ids } = await req.json();
+    if (!ids) return new NextResponse("Incomplete request", {status: 403});
 
     const query = await (await supabase()).from('user_ingredients')
       .delete()
       .eq('user_id', user.id)
-      .eq('id', id);
+      .in('id', [...ids]);
 
-    if (query.error) return new NextResponse("cannot delete", {status: 500});
+    if (query.error) {
+      console.error(query.error);
+      throw query.error;
+    };
 
     revalidateTag("user-ingredients", "max");
 
     return NextResponse.json(null, { status: 200 });
   } catch (error){
     console.log(error);
-    return new NextResponse("Unknown error occured", {status: 500});
+    let message = "Unkown error occured";
+    if (error instanceof Error) message = error.message;
+    return new NextResponse(message, {status: 500});
   }
 }

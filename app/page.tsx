@@ -11,8 +11,9 @@ import {
   DashboardProvider,
 } from "@/context/DashboardContext";
 import Select, { SingleValue } from "react-select";
-import { saveIngredient, removeIngredient } from "@/lib/services/Ingredients";
+import { saveIngredient, removeIngredients } from "@/lib/services/Ingredients";
 import { toast } from "react-toastify";
+import { MdDeleteOutline } from "react-icons/md";
 
 export interface inputOption {
   label: string;
@@ -42,7 +43,9 @@ function Home() {
     isLoadingAddIngredient,
     setIsLoadingAddIngredient,
     ingredientsToAdd,
-    setIngredientsToAdd
+    setIngredientsToAdd,
+    setSelectedOwnedIngredientId,
+    selectedOwnedIngredientId
   } = useDashboardContext()!;
 
   useEffect(() => {
@@ -190,7 +193,6 @@ function Home() {
                       <VscDebugContinue className="text-2xl text-primary" />
                     </button>
                   </div>
-
                   {ingredientsToAdd.length > 0 && (
                     <div className="space-y-3 pt-4 border-t border-border/50">
                       <div className="flex items-center justify-between">
@@ -270,8 +272,56 @@ function Home() {
 }
 
 function OwnedIngredientsPane() {
-  const { setOwnedIngredients, ownedIngredients, isLoadingOwnedIngredients } =
-    useDashboardContext()!;
+  const {
+    setOwnedIngredients, ownedIngredients,
+    isLoadingOwnedIngredients,
+    selectedOwnedIngredientId, setSelectedOwnedIngredientId,
+    isDeletingOwnedIngredients, setIsDeletingOwnedIngredients
+  } = useDashboardContext()!;
+
+  function handleIngredientCardClick(id: string){
+    if (!id) return;
+
+    setSelectedOwnedIngredientId(selectedIds => {
+      const idFound = selectedIds?.indexOf(id) >= 0;
+
+      if (!idFound) {
+        return [...selectedIds, id];
+      } 
+      
+      return selectedIds.filter((selectedId) => selectedId !== id);
+
+    });
+  }
+
+  /**
+   * Checks if an id exists in the selected owned-ingredients
+   *
+   * @param id - primary key of ingredient
+   */
+  function isSelectedId(id: string): boolean{
+    return selectedOwnedIngredientId.indexOf(id) >= 0;
+  }
+
+  async function handleMultipleDeleteButton(){
+    if (isDeletingOwnedIngredients) return;
+    try {
+      setIsDeletingOwnedIngredients(true);
+      await removeIngredients(selectedOwnedIngredientId);
+      
+      const filteredOwnedIngredients = ownedIngredients.filter(_ownedIngredient => {
+        const found = selectedOwnedIngredientId.indexOf(_ownedIngredient.id) >= 0;
+        return !found;
+      });
+      setOwnedIngredients(filteredOwnedIngredients);
+      setSelectedOwnedIngredientId([]);
+    } catch (error){
+      if (error instanceof Error)
+        console.error(error.message);
+    } finally {
+      setIsDeletingOwnedIngredients(false);
+    }
+  }
 
   return (
     <div className="card p-6 flex flex-col h-[500px]">
@@ -280,6 +330,16 @@ function OwnedIngredientsPane() {
           <span className="w-1.5 h-6 bg-primary rounded-full" />
           On Your Shelf
         </h3>
+
+        { selectedOwnedIngredientId?.length > 0 && (
+          <button
+            onClick={handleMultipleDeleteButton}
+            className="cursor-pointer border border-border rounded-md p-2"
+          >
+            <MdDeleteOutline />
+          </button>
+        )}
+       
         <span className="text-xs font-bold uppercase tracking-wider text-text-muted px-2 py-1 bg-border rounded-md">
           {ownedIngredients.length} Items
         </span>
@@ -307,7 +367,11 @@ function OwnedIngredientsPane() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                  className="flex items-center justify-between p-3 bg-bg-subtle border border-border rounded-lg hover:border-primary/30 transition-colors"
+                  className={`flex items-center justify-between
+                    p-3 bg-bg-subtle border ${isSelectedId(ownedIngredient.id)? 'border-accent':'border-border'} rounded-lg
+                    hover:${isSelectedId(ownedIngredient.id)? '':'border-primary/30'} transition-colors
+                  `}
+                  onClick={()=>handleIngredientCardClick(ownedIngredient.id || "")}
                 >
                   <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
                   <button
@@ -327,7 +391,7 @@ function OwnedIngredientsPane() {
 
   async function handleRemoveIngredient(id: string) {
     try {
-      removeIngredient(id);
+      removeIngredients([id]);
       setOwnedIngredients(ownedIngredients.filter((oi) => oi.id !== id));
     } catch (error) {
       console.error(error);
