@@ -101,6 +101,7 @@ export default function SignUp() {
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
+        console.error(error);
       }
     } finally {
       setIsLoading(false);

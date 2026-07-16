@@ -5,6 +5,14 @@ let allIngredientsCache: Ingredient[] | null = null;
 let ownedIngredientsCache: OwnedIngredient[] | null = null;
 
 /**
+ * Clears the locally cached ingredients.
+ * Should be called upon user logout to prevent data leaking between sessions.
+ */
+export function clearIngredientsCache() {
+  ownedIngredientsCache = null;
+}
+
+/**
  * Retrieve all of the ingredients in the user's inventory
  * 
  * @param forceRefresh - Whether to bypass the cache and fetch fresh data
