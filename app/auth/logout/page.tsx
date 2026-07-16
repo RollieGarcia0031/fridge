@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client"
+import { clearIngredientsCache } from "@/lib/services/Ingredients";
 import { useRouter } from "next/navigation";
 import { Puff } from "react-loader-spinner";
 
@@ -12,6 +13,7 @@ export default function Logout(){
   useEffect(()=>{
     const logout = async ()=>{
       await getSupabaseClient().auth.signOut();
+      clearIngredientsCache();
       router.push("/auth/login");
     }
 
