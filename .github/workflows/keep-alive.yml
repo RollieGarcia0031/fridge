@@ -1,0 +1,25 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Runs every Tuesday and Friday at 08:00 UTC
+    - cron: "0 8 * * 2"
+    - cron: "0 8 * * 5"
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  ping:
+    name: Ping keep-alive endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/keep-alive
+        run: |
+          echo "Pinging keep-alive endpoint at $(date -u)"
+          RESPONSE=$(curl -s -o /tmp/response.json -w "%{http_code}" "${{ secrets.APP_URL }}/api/keep-alive")
+          echo "HTTP status: $RESPONSE"
+          cat /tmp/response.json
+          if [ "$RESPONSE" != "200" ]; then
+            echo "::error::Keep-alive ping failed with status $RESPONSE"
+            exit 1
+          fi
+          echo "Keep-alive ping succeeded."
