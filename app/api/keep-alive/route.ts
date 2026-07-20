@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -7,9 +7,18 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
  *
  * GET /api/keep-alive
  *   200 { ok: true, updated_at: "<iso-timestamp>" }
+ *   401 { error: "Unauthorized" }
  *   500 { error: "<message>" }
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const expectedToken = process.env.KEEP_ALIVE_TOKEN;
+
+  // Protect route if KEEP_ALIVE_TOKEN is configured in environment
+  if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const supabase = getSupabaseAdminClient();
 
   // Update the single sentinel row's timestamp
