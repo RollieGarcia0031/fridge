@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { Oval, TailSpin } from "react-loader-spinner";
-import { IoArrowBackOutline, IoTimeOutline, IoPeopleOutline } from "react-icons/io5";
+import { IoArrowBackOutline, IoTimeOutline, IoPeopleOutline, IoBulbOutline, IoWarningOutline } from "react-icons/io5";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -148,6 +148,79 @@ function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
             ))}
           </div>
         </section>
+
+        {/* Ingredients */}
+        <section>
+          <h2 className="mb-6 flex items-center gap-3">
+            <span className="w-1.5 h-6 bg-primary rounded-full" />
+            Ingredients
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {instructions.ingredients.map((ingredient, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-3 bg-bg-subtle/50 rounded-xl border border-border"
+              >
+                <span className="font-medium text-text">{ingredient.name}</span>
+                {ingredient.quantity && (
+                  <span className="text-sm text-text-muted">{ingredient.quantity}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Tips */}
+        {instructions.tips && instructions.tips.length > 0 && (
+          <section>
+            <details className="group">
+              <summary className="flex items-center gap-3 cursor-pointer list-none">
+                <span className="w-1.5 h-6 bg-green-500 rounded-full" />
+                <h2 className="flex items-center gap-2">
+                  <IoBulbOutline className="text-xl text-green-500" />
+                  Cooking Tips
+                </h2>
+                <span className="ml-auto text-text-muted group-open:rotate-180 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+              </summary>
+              <ul className="mt-4 space-y-2 ml-4">
+                {instructions.tips.map((tip, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-text-muted">
+                    <span className="text-green-500 mt-1">•</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </section>
+        )}
+
+        {/* Warnings */}
+        {instructions.warnings && instructions.warnings.length > 0 && (
+          <section>
+            <details className="group">
+              <summary className="flex items-center gap-3 cursor-pointer list-none">
+                <span className="w-1.5 h-6 bg-amber-500 rounded-full" />
+                <h2 className="flex items-center gap-2">
+                  <IoWarningOutline className="text-xl text-amber-500" />
+                  Safety & Allergy Notes
+                </h2>
+                <span className="ml-auto text-text-muted group-open:rotate-180 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+              </summary>
+              <ul className="mt-4 space-y-2 ml-4">
+                {instructions.warnings.map((warning, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-amber-600 dark:text-amber-400">
+                    <span className="mt-1">⚠</span>
+                    <span>{warning}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </section>
+        )}
 
         {/* Footer actions */}
         <div className="pt-8 border-t border-border flex justify-center">
