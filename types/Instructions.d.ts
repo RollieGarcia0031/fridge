@@ -17,4 +17,5 @@ interface Instrcutions {
     }[];
 
     tips: string[];
+    warnings?: string[];
 }   
