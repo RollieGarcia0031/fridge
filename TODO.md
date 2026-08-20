@@ -27,7 +27,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 
 ### 5. Indicate if ingredient is already taken
 - [x] Current: already-owned and queued ingredients are silently filtered out of the dropdown (`filteredIngredients`, `app/page.tsx:56-67`).
-- [ ] Enhancement: render a "✓ already in fridge" / "✓ queued" badge instead of hiding them, so the user sees the state. Keep `filteredIngredients` behavior but add a visible indicator.
+- [x] Enhancement: render a "✓ already in fridge" / "✓ queued" badge instead of hiding them, so the user sees the state. Keep `filteredIngredients` behavior but add a visible indicator.
 
 ### 6. Fridge mode (bulk input, multiple foods at once)
 - [x] Current: queue-and-batch-save ("Selected to Add" chips → "Add to Fridge") already allows multi-input. The plan asks for a dedicated "mode" toggle; current UX is effectively fridge mode by default.
@@ -55,8 +55,8 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] Fallback: if the model can't produce a URL, hide the section.
 
 ### 13. Recipe page missing fields from AI output
-- [ ] `app/recipe/page.tsx` currently drops `tips`, `warnings`, and the detailed `ingredients` list from the flow output. Render these sections: tips as helpful cooking tips, warnings as safety/allergy notes, ingredients with name + quantity.
-- [ ] Consider adding collapsible sections for tips/warnings to keep the UI clean.
+- [x] `app/recipe/page.tsx` currently drops `tips`, `warnings`, and the detailed `ingredients` list from the flow output. Render these sections: tips as helpful cooking tips, warnings as safety/allergy notes, ingredients with name + quantity.
+- [x] Consider adding collapsible sections for tips/warnings to keep the UI clean.
 
 ## Minor features (plan)
 
@@ -116,7 +116,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] 2. Nutrient priority
 - [ ] 3. Allow suggested ingredients flag
 - [x] 4. Autocomplete typing
-- [x] 5. Indicate if ingredient is already taken (partial)
+- [x] 5. Indicate if ingredient is already taken
 - [x] 6. Fridge mode (partial)
 - [ ] 7. Market mode
 - [ ] 8. Instant generation
@@ -124,7 +124,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] 10. Recommended tutorial (video)
 - [ ] 11. Customize fridge inventory (quantity / expiry)
 - [ ] 12. Presets of fridge inventory
-- [ ] 13. Recipe page missing fields from AI output
+- [x] 13. Recipe page missing fields from AI output
 - [ ] 14. Quantity support in POST /api/ingredients/user
 - [ ] 15. Recipe saving / favorites
 - [ ] 16. Dietary restrictions / preferences
