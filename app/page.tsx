@@ -10,10 +10,14 @@ import {
   useDashboardContext,
   DashboardProvider,
 } from "@/context/DashboardContext";
-import Select, { SingleValue } from "react-select";
+import Select, { SingleValue, components as selectComponents } from "react-select";
 import { saveIngredient, removeIngredients } from "@/lib/services/Ingredients";
 import { toast } from "react-toastify";
 import { MdDeleteOutline } from "react-icons/md";
+
+interface ingredientOption extends inputOption {
+  status?: "owned" | "queued";
+}
 
 export interface inputOption {
   label: string;
@@ -53,27 +57,20 @@ function Home() {
     fetchOwnedIngredients();
   }, []);
 
-  const filteredIngredients = ingredients.filter((ingredient) => {
-
-    const matchedOwnedIngredient =  !ownedIngredients.some(
-      (ownedIngredient) => ownedIngredient.ingredient.id === ingredient.id,
+  const options: ingredientOption[] = ingredients.map((i) => {
+    const isOwned = ownedIngredients.some(
+      (owned) => owned.ingredient.id === i.id,
+    );
+    const isQueued = ingredientsToAdd.some(
+      (queued) => queued.value === i.id,
     );
 
-    const matchedIngredientToAdd = !ingredientsToAdd.some(
-      (ingredientToAdd) => ingredientToAdd.value === ingredient.id
-    );
-
-    return matchedOwnedIngredient && matchedIngredientToAdd;
+    return {
+      value: i.id,
+      label: i.name,
+      status: isOwned ? "owned" : isQueued ? "queued" : undefined,
+    };
   });
-
-  useEffect(()=>{
-
-  }, [ingredientsToAdd]);
-
-  const options: inputOption[] = filteredIngredients.map((i) => ({
-    value: i.id,
-    label: i.name,
-  }));
 
   const colorStyle = {
     control: (base: any, state: any) => ({
@@ -95,7 +92,8 @@ function Home() {
         ? "var(--bg-subtle)"
         : "transparent",
       color: state.isSelected ? "white" : "var(--text)",
-      cursor: "pointer",
+      cursor: state.data.status ? "not-allowed" : "pointer",
+      opacity: state.data.status ? 0.6 : 1,
       "&:active": {
         backgroundColor: "var(--primary)",
       },
@@ -116,6 +114,30 @@ function Home() {
       color: "var(--text)",
     }),
   };
+
+  const OptionBadge = ({ status }: { status?: "owned" | "queued" }) => {
+    if (!status) return null;
+    return (
+      <span
+        className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+          status === "owned"
+            ? "bg-green-500/15 text-green-400"
+            : "bg-amber-500/15 text-amber-400"
+        }`}
+      >
+        {status === "owned" ? "✓ in fridge" : "✓ queued"}
+      </span>
+    );
+  };
+
+  const CustomOption = (props: any) => (
+    <selectComponents.Option {...props}>
+      <div className="flex items-center gap-2 w-full">
+        <span>{props.label}</span>
+        <OptionBadge status={props.data.status} />
+      </div>
+    </selectComponents.Option>
+  );
 
   const handleIngredientChange = (selectedOption : SingleValue<inputOption>) => {
 
@@ -159,10 +181,12 @@ function Home() {
                   Add Ingredient
                 </h3>
                 <div className="space-y-4">
-                  <Select
+                  <Select<ingredientOption>
                     instanceId="ingredientSelector"
                     options={options}
                     styles={colorStyle}
+                    components={{ Option: CustomOption }}
+                    isOptionDisabled={(option) => !!option.status}
                     value={
                       selectedIngredient
                         ? { label: selectedIngredient.name, value: selectedIngredient.id }
