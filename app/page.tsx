@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   useDashboardContext,
   DashboardProvider,
+  DishType,
 } from "@/context/DashboardContext";
 import Select, { SingleValue, components as selectComponents } from "react-select";
 import { saveIngredient, removeIngredients } from "@/lib/services/Ingredients";
@@ -49,7 +50,10 @@ function Home() {
     ingredientsToAdd,
     setIngredientsToAdd,
     setSelectedOwnedIngredientId,
-    selectedOwnedIngredientId
+    selectedOwnedIngredientId,
+    dishType,
+    setDishType,
+    setSuggestedRecipes
   } = useDashboardContext()!;
 
   useEffect(() => {
@@ -151,6 +155,14 @@ function Home() {
     setSelectedIngredientId(selectedOption.value || "");
   };
 
+  const handleDishTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value as DishType;
+
+    // drop stale suggestions so the dialog regenerates with the new filter
+    setSuggestedRecipes([]);
+    setDishType(value);
+  };
+
   const selectedIngredient = ingredients.find(
     (ingredient) => ingredient.id === selectedIngredientId,
   );
@@ -216,6 +228,26 @@ function Home() {
                     >
                       <VscDebugContinue className="text-2xl text-primary" />
                     </button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label
+                      htmlFor="dishTypeFilter"
+                      className="text-[10px] font-bold uppercase tracking-widest text-text-muted whitespace-nowrap"
+                    >
+                      Dish type
+                    </label>
+                    <select
+                      id="dishTypeFilter"
+                      value={dishType}
+                      onChange={handleDishTypeChange}
+                      className="flex-1 h-10 px-3 text-sm bg-bg-subtle border border-border rounded-lg
+                      focus:border-primary focus:outline-none cursor-pointer"
+                    >
+                      <option value="">Any type</option>
+                      <option value="soup">Soup</option>
+                      <option value="stir-fried">Stir-fried</option>
+                    </select>
                   </div>
                   {ingredientsToAdd.length > 0 && (
                     <div className="space-y-3 pt-4 border-t border-border/50">

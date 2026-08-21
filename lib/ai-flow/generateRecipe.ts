@@ -6,6 +6,10 @@ export const generateRecipeInputSchema = z.object({
     .array(z.string())
     .min(1)
     .describe("The available ingredients that can be used to cook a meal"),
+  type: z
+    .enum(["soup", "stir-fried"])
+    .optional()
+    .describe("The preferred dish type; omit for any kind of dish"),
 });
 
 export const generateRecipeOutputSchema = z.array(
@@ -22,11 +26,17 @@ export const generateRecipeOutputSchema = z.array(
 
 type GenerateRecipeInput = z.infer<typeof generateRecipeInputSchema>;
 
-const buildGenerateRecipePrompt = ({ ingredients }: GenerateRecipeInput) => `
+const buildGenerateRecipePrompt = ({ ingredients, type }: GenerateRecipeInput) => `
 You are a meal-planning assistant.
 
 Generate exactly 5 easy-to-cook dishes using ingredients from this list when possible:
 ${ingredients.join(", ")}
+
+${
+  type
+    ? `All 5 dishes must be of the "${type}" type (e.g. brothy simmered dishes for "soup", pan-fried dishes tossed in a wok for "stir-fried").`
+    : "The dishes can be of any type."
+}
 
 Return only JSON that matches the provided output schema.
 `;

@@ -5,11 +5,11 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 ## Input options (plan: optional inputs)
 
 ### 1. Dish `type` filter (soup / stir-fried)
-- [ ] `lib/ai-flow/generateRecipe.ts`: extend `generateRecipeInputSchema` with `type: z.enum(["soup", "stir-fried"]).optional()`; thread it through `buildGenerateRecipePrompt`.
-- [ ] `app/api/ai/meal-ideas/route.ts`: read `type` from the request body (currently it ignores the body entirely — see line 36) and pass it to `generateRecipeFlow`.
-- [ ] `context/DashboardContext.tsx`: add `dishType` state + setter to `refreshRecommendedRecipes`; pass body to `getRecommendedMeals()`.
-- [ ] `lib/services/Meal.ts`: add body param to `getRecommendedMeals`.
-- [ ] `app/page.tsx`: add a select/toggle for dish type near the suggestion button; `components/SuggestedDialog.tsx` should show the active filter.
+- [x] `lib/ai-flow/generateRecipe.ts`: extend `generateRecipeInputSchema` with `type: z.enum(["soup", "stir-fried"]).optional()`; thread it through `buildGenerateRecipePrompt`.
+- [x] `app/api/ai/meal-ideas/route.ts`: read `type` from the request body (currently it ignores the body entirely — see line 36) and pass it to `generateRecipeFlow`.
+- [x] `context/DashboardContext.tsx`: add `dishType` state + setter to `refreshRecommendedRecipes`; pass body to `getRecommendedMeals()`.
+- [x] `lib/services/Meal.ts`: add body param to `getRecommendedMeals`.
+- [x] `app/page.tsx`: add a select/toggle for dish type near the suggestion button; `components/SuggestedDialog.tsx` should show the active filter.
 
 ### 2. Nutrient priority (muscle / bone / sick)
 - [ ] Same files as #1: `nutrientPriority: z.enum(["muscle", "bone", "sick"]).optional()` on the input schema, prompt guidance (e.g., "high protein for muscle recovery", "calcium/vitamin D for bone health", "easily digestible for sick days").
@@ -112,7 +112,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 
 ## Main Checklist
 
-- [ ] 1. Dish type filter
+- [x] 1. Dish type filter
 - [ ] 2. Nutrient priority
 - [ ] 3. Allow suggested ingredients flag
 - [x] 4. Autocomplete typing

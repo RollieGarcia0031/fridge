@@ -33,7 +33,9 @@ export default function RootLayout({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   };
   return (
-    <html lang="en">
+    // theme-init mutates documentElement's class before hydration;
+    // suppress the expected attribute mismatch on this element only
+    <html lang="en" suppressHydrationWarning>
       <head>
         <Script
           id="runtime-public-env"
