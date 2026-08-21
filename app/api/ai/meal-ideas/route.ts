@@ -9,6 +9,8 @@ import { NextResponse } from "next/server";
  * request:
  *   Headers: 
  *     Authorization: Bearer <Supabase token>
+ *   Body (optional):
+ *     { "type": "soup" | "stir-fried" }
  *
  * response:
  * [
@@ -33,9 +35,19 @@ export async function POST(req: Request){
     if (error || !data.user)
       return new NextResponse(null,{status: 401});
   
+    // optional dish type filter from request body; ignored when absent/invalid
+    let type: "soup" | "stir-fried" | undefined;
+    try {
+      const body = await req.json();
+      if (body?.type === "soup" || body?.type === "stir-fried")
+        type = body.type;
+    } catch {
+      // no body provided — keep filter unset
+    }
+
     const ingredients = await getUserRecipes(data.user.id);
 
-    const result = await generateRecipeFlow({ingredients});
+    const result = await generateRecipeFlow({ingredients, type});
 
     return new NextResponse(JSON.stringify(result),{
       status: 200

@@ -7,6 +7,11 @@ import {
 
 import { getRecommendedMeals } from '@/lib/services/Meal';
 
+/**
+ * supported dish type filters for recipe suggestions
+ */
+export type DishType = "" | "soup" | "stir-fried";
+
 interface DashboardContextProps {
   /**
    * list of available ingredients for all users
@@ -48,6 +53,12 @@ interface DashboardContextProps {
    */
   isLoadingResponse: boolean;
   setIsLoadingResponse: (isLoadingResponse: boolean) => void;
+
+  /**
+   * active dish type filter applied when generating recipe suggestions
+   */
+  dishType: DishType;
+  setDishType: (dishType: DishType) => void;
 
   /**
    * refresh the content of suggestion dialog
@@ -112,6 +123,35 @@ export function DashboardProvider({children}:{
   // state for loading suggestion from AI
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
 
+  // active dish type filter for recipe suggestions ("" = no filter)
+  const [dishType, setDishType] = useState<DishType>("");
+
+  // mirrors dishType so in-flight suggestion requests can detect filter changes
+  const dishTypeRef = useRef<DishType>("");
+
+  // id of the most recent suggestion request; older requests are stale
+  const latestRequestIdRef = useRef(0);
+
+  /**
+   * update the dish type filter and invalidate any in-flight suggestion request
+   */
+  function updateDishType(value: DishType){
+    if (value === dishTypeRef.current){
+      setDishType(value);
+      return;
+    }
+
+    dishTypeRef.current = value;
+    setDishType(value);
+
+    // invalidate any in-flight suggestion request for the old filter
+    latestRequestIdRef.current++;
+
+    // no replacement request is running yet; stop the spinner here so a
+    // discarded response cannot leave the dialog "thinking" forever
+    setIsLoadingResponse(false);
+  }
+
   // state for loading while adding an ingredient
   const [isLoadingAddIngredient, setIsLoadingAddIngredient] = useState(false);
 
@@ -129,14 +169,27 @@ export function DashboardProvider({children}:{
    * reload the state for suggested recipes
    */
   async function refreshRecommendedRecipes(){
+    // mark any prior in-flight request as superseded
+    const requestId = ++latestRequestIdRef.current;
+
     try {
       setIsLoadingResponse(true);
-      const data = await getRecommendedMeals();
-      setSuggestedRecipes(data!);  
+
+      const requestedDishType = dishTypeRef.current;
+      const data = await getRecommendedMeals(requestedDishType ? { type: requestedDishType } : undefined);
+
+      // a newer request is in flight; let it own the result and the loading state
+      if (requestId !== latestRequestIdRef.current) return;
+      // the filter changed while this request was pending; discard the stale result
+      if (requestedDishType !== dishTypeRef.current) return;
+
+      setSuggestedRecipes(data!);
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoadingResponse(false);
+      // keep the spinner running while a newer request is still pending
+      if (requestId === latestRequestIdRef.current)
+        setIsLoadingResponse(false);
     }
   } 
 
@@ -181,6 +234,8 @@ export function DashboardProvider({children}:{
       setSuggestedRecipes,
       isLoadingResponse,
       setIsLoadingResponse,
+      dishType,
+      setDishType: updateDishType,
       refreshRecommendedRecipes,
       fetchOwnedIngredients,
       RefreshIngredientList,

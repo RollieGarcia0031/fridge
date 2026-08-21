@@ -13,7 +13,11 @@ export default function SuggestedDialog() {
     suggestedRecipes,
     refreshRecommendedRecipes,
     isLoadingResponse,
+    dishType,
   } = useDashboardContext()!;
+
+  const activeFilterLabel =
+    dishType === "soup" ? "Soup" : dishType === "stir-fried" ? "Stir-fried" : "Any type";
 
   const handleClose = () => {
     suggestionDialogRef.current?.close();
@@ -32,6 +36,9 @@ export default function SuggestedDialog() {
             <h2 className="flex items-center gap-3">
               <span className="w-1.5 h-6 bg-accent rounded-full animate-pulse" />
               Meal Suggestions
+              <span className="text-[10px] font-bold uppercase tracking-widest bg-accent/10 text-accent px-2 py-0.5 rounded-full">
+                {activeFilterLabel}
+              </span>
             </h2>
             <p className="text-text-muted text-sm">
               AI-generated recipes matching your available ingredients
