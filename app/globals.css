@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -43,19 +45,17 @@
   --radius-sm: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: oklch(0.1 0.02 285);
-    --bg-subtle: oklch(0.15 0.03 285);
-    --bg-card: oklch(0.12 0.03 285 / 0.8);
-    --text: oklch(0.98 0.01 285);
-    --text-muted: oklch(63.301% 0.0134 285.94);
-    --primary: oklch(0.75 0.15 285);
-    --primary-foreground: oklch(0.1 0.02 285);
-    --accent: oklch(0.7 0.15 210);
-    --border: oklch(0.25 0.04 285);
-    --ring: oklch(0.75 0.15 285 / 0.4);
-  }
+.dark {
+  --bg: oklch(0.1 0.02 285);
+  --bg-subtle: oklch(0.15 0.03 285);
+  --bg-card: oklch(0.12 0.03 285 / 0.8);
+  --text: oklch(0.98 0.01 285);
+  --text-muted: oklch(63.301% 0.0134 285.94);
+  --primary: oklch(0.75 0.15 285);
+  --primary-foreground: oklch(0.1 0.02 285);
+  --accent: oklch(0.7 0.15 210);
+  --border: oklch(0.25 0.04 285);
+  --ring: oklch(0.75 0.15 285 / 0.4);
 }
 
 body {
