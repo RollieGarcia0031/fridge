@@ -104,9 +104,9 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] UI for viewing and managing shopping list.
 
 ### 19. Dark/light mode toggle
-- [ ] Add theme switcher in UI (currently only one theme).
-- [ ] Persist preference in localStorage or user settings.
-- [ ] Update CSS variables for light mode support.
+- [x] Add theme switcher in UI (`components/ThemeToggle.tsx`, rendered in `AppHeader` desktop nav + mobile menu).
+- [x] Persist preference in localStorage (`theme` key); system preference used as fallback via pre-paint script in `app/layout.tsx`.
+- [x] Update CSS variables for light mode support: dark palette moved from `prefers-color-scheme` media query to a `.dark` class in `app/globals.css`, with `@custom-variant dark` for Tailwind `dark:` utilities.
 
 ---
 
@@ -130,7 +130,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] 16. Dietary restrictions / preferences
 - [ ] 17. Meal planning calendar
 - [ ] 18. Shopping list generation
-- [ ] 19. Dark/light mode toggle
+- [x] 19. Dark/light mode toggle
 
 ---
 

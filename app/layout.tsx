@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import AppHeader from "@/components/AppHeader";
+import { themeInitScript } from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `window.__ENV=${JSON.stringify(publicEnv)};`,
           }}
+        />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
       </head>
       <body

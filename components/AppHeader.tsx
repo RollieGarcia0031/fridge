@@ -6,6 +6,7 @@ import { RxHamburgerMenu } from "react-icons/rx";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import ThemeToggle from "./ThemeToggle";
 
 export default function AppHeader() {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -31,8 +32,9 @@ export default function AppHeader() {
 
         {/* Desktop Nav */}
         <nav className="hidden sm:flex items-center gap-6">
-          <Link 
-            href="/auth/logout" 
+          <ThemeToggle />
+          <Link
+            href="/auth/logout"
             className="btn btn-ghost text-sm font-medium flex items-center gap-2"
           >
             <IoPersonOutline className="text-lg" />
@@ -77,6 +79,7 @@ export default function AppHeader() {
                   <IoCloseOutline className="text-2xl" />
                 </button>
               </div>
+              <ThemeToggle className="justify-start w-full" />
               <Link
                 href="/auth/logout"
                 className="btn btn-secondary justify-start w-full"
