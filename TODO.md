@@ -12,8 +12,8 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [x] `app/page.tsx`: add a select/toggle for dish type near the suggestion button; `components/SuggestedDialog.tsx` should show the active filter.
 
 ### 2. Nutrient priority (muscle / bone / sick)
-- [ ] Same files as #1: `nutrientPriority: z.enum(["muscle", "bone", "sick"]).optional()` on the input schema, prompt guidance (e.g., "high protein for muscle recovery", "calcium/vitamin D for bone health", "easily digestible for sick days").
-- [ ] Route passes body field through; context state; UI selector.
+- [x] Same files as #1: `nutrientPriority: z.enum(["muscle", "bone", "sick"]).optional()` on the input schema, prompt guidance (e.g., "high protein for muscle recovery", "calcium/vitamin D for bone health", "easily digestible for sick days").
+- [x] Route passes body field through; context state; UI selector.
 
 ### 3. "Can suggest more ingredients" flag (true | false)
 - [ ] `generateRecipeInputSchema`: `allowSuggestedIngredients: z.boolean().optional()` (default `false`). When true, the prompt should explicitly allow extra ingredients beyond the input list and the output `ingredients` arrays may include non-inventory items.
@@ -113,7 +113,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 ## Main Checklist
 
 - [x] 1. Dish type filter
-- [ ] 2. Nutrient priority
+- [x] 2. Nutrient priority
 - [ ] 3. Allow suggested ingredients flag
 - [x] 4. Autocomplete typing
 - [x] 5. Indicate if ingredient is already taken

@@ -5,12 +5,17 @@ import {
   getAllIngredients,
 } from "@/lib/services/Ingredients";
 
-import { getRecommendedMeals } from '@/lib/services/Meal';
+import { getRecommendedMeals, MealFilters } from '@/lib/services/Meal';
 
 /**
  * supported dish type filters for recipe suggestions
  */
 export type DishType = "" | "soup" | "stir-fried";
+
+/**
+ * supported nutrient priority filters for recipe suggestions
+ */
+export type NutrientPriority = "" | "muscle" | "bone" | "sick";
 
 interface DashboardContextProps {
   /**
@@ -59,6 +64,12 @@ interface DashboardContextProps {
    */
   dishType: DishType;
   setDishType: (dishType: DishType) => void;
+
+  /**
+   * active nutrient priority filter applied when generating recipe suggestions
+   */
+  nutrientPriority: NutrientPriority;
+  setNutrientPriority: (nutrientPriority: NutrientPriority) => void;
 
   /**
    * refresh the content of suggestion dialog
@@ -129,6 +140,12 @@ export function DashboardProvider({children}:{
   // mirrors dishType so in-flight suggestion requests can detect filter changes
   const dishTypeRef = useRef<DishType>("");
 
+  // active nutrient priority filter for recipe suggestions ("" = no priority)
+  const [nutrientPriority, setNutrientPriority] = useState<NutrientPriority>("");
+
+  // mirrors nutrientPriority so in-flight suggestion requests can detect filter changes
+  const nutrientPriorityRef = useRef<NutrientPriority>("");
+
   // id of the most recent suggestion request; older requests are stale
   const latestRequestIdRef = useRef(0);
 
@@ -144,7 +161,28 @@ export function DashboardProvider({children}:{
     dishTypeRef.current = value;
     setDishType(value);
 
-    // invalidate any in-flight suggestion request for the old filter
+    invalidateInFlightSuggestions();
+  }
+
+  /**
+   * update the nutrient priority filter and invalidate any in-flight suggestion request
+   */
+  function updateNutrientPriority(value: NutrientPriority){
+    if (value === nutrientPriorityRef.current){
+      setNutrientPriority(value);
+      return;
+    }
+
+    nutrientPriorityRef.current = value;
+    setNutrientPriority(value);
+
+    invalidateInFlightSuggestions();
+  }
+
+  /**
+   * invalidate any in-flight suggestion request for the old filters
+   */
+  function invalidateInFlightSuggestions(){
     latestRequestIdRef.current++;
 
     // no replacement request is running yet; stop the spinner here so a
@@ -176,12 +214,20 @@ export function DashboardProvider({children}:{
       setIsLoadingResponse(true);
 
       const requestedDishType = dishTypeRef.current;
-      const data = await getRecommendedMeals(requestedDishType ? { type: requestedDishType } : undefined);
+      const requestedPriority = nutrientPriorityRef.current;
+
+      const filters: MealFilters = {};
+      if (requestedDishType) filters.type = requestedDishType;
+      if (requestedPriority) filters.nutrientPriority = requestedPriority;
+      const hasFilters = Boolean(requestedDishType || requestedPriority);
+
+      const data = await getRecommendedMeals(hasFilters ? filters : undefined);
 
       // a newer request is in flight; let it own the result and the loading state
       if (requestId !== latestRequestIdRef.current) return;
-      // the filter changed while this request was pending; discard the stale result
+      // a filter changed while this request was pending; discard the stale result
       if (requestedDishType !== dishTypeRef.current) return;
+      if (requestedPriority !== nutrientPriorityRef.current) return;
 
       setSuggestedRecipes(data!);
     } catch (error) {
@@ -236,6 +282,8 @@ export function DashboardProvider({children}:{
       setIsLoadingResponse,
       dishType,
       setDishType: updateDishType,
+      nutrientPriority,
+      setNutrientPriority: updateNutrientPriority,
       refreshRecommendedRecipes,
       fetchOwnedIngredients,
       RefreshIngredientList,

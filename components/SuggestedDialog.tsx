@@ -14,10 +14,20 @@ export default function SuggestedDialog() {
     refreshRecommendedRecipes,
     isLoadingResponse,
     dishType,
+    nutrientPriority,
   } = useDashboardContext()!;
 
   const activeFilterLabel =
     dishType === "soup" ? "Soup" : dishType === "stir-fried" ? "Stir-fried" : "Any type";
+
+  const nutrientPriorityLabel =
+    nutrientPriority === "muscle"
+      ? "Muscle"
+      : nutrientPriority === "bone"
+      ? "Bone"
+      : nutrientPriority === "sick"
+      ? "Sick day"
+      : null;
 
   const handleClose = () => {
     suggestionDialogRef.current?.close();
@@ -39,6 +49,11 @@ export default function SuggestedDialog() {
               <span className="text-[10px] font-bold uppercase tracking-widest bg-accent/10 text-accent px-2 py-0.5 rounded-full">
                 {activeFilterLabel}
               </span>
+              {nutrientPriorityLabel && (
+                <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  {nutrientPriorityLabel}
+                </span>
+              )}
             </h2>
             <p className="text-text-muted text-sm">
               AI-generated recipes matching your available ingredients
