@@ -10,6 +10,7 @@ import {
   useDashboardContext,
   DashboardProvider,
   DishType,
+  NutrientPriority,
 } from "@/context/DashboardContext";
 import Select, { SingleValue, components as selectComponents } from "react-select";
 import { saveIngredient, removeIngredients } from "@/lib/services/Ingredients";
@@ -53,6 +54,8 @@ function Home() {
     selectedOwnedIngredientId,
     dishType,
     setDishType,
+    nutrientPriority,
+    setNutrientPriority,
     setSuggestedRecipes
   } = useDashboardContext()!;
 
@@ -163,6 +166,14 @@ function Home() {
     setDishType(value);
   };
 
+  const handleNutrientPriorityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value as NutrientPriority;
+
+    // drop stale suggestions so the dialog regenerates with the new filter
+    setSuggestedRecipes([]);
+    setNutrientPriority(value);
+  };
+
   const selectedIngredient = ingredients.find(
     (ingredient) => ingredient.id === selectedIngredientId,
   );
@@ -247,6 +258,26 @@ function Home() {
                       <option value="">Any type</option>
                       <option value="soup">Soup</option>
                       <option value="stir-fried">Stir-fried</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label
+                      htmlFor="nutrientPriorityFilter"
+                      className="text-[10px] font-bold uppercase tracking-widest text-text-muted whitespace-nowrap"
+                    >
+                      Nutrition
+                    </label>
+                    <select
+                      id="nutrientPriorityFilter"
+                      value={nutrientPriority}
+                      onChange={handleNutrientPriorityChange}
+                      className="flex-1 h-10 px-3 text-sm bg-bg-subtle border border-border rounded-lg
+                      focus:border-primary focus:outline-none cursor-pointer"
+                    >
+                      <option value="">No priority</option>
+                      <option value="muscle">Muscle (high protein)</option>
+                      <option value="bone">Bone (calcium / vitamin D)</option>
+                      <option value="sick">Sick day (easy to digest)</option>
                     </select>
                   </div>
                   {ingredientsToAdd.length > 0 && (

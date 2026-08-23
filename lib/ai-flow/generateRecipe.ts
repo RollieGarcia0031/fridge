@@ -10,6 +10,12 @@ export const generateRecipeInputSchema = z.object({
     .enum(["soup", "stir-fried"])
     .optional()
     .describe("The preferred dish type; omit for any kind of dish"),
+  nutrientPriority: z
+    .enum(["muscle", "bone", "sick"])
+    .optional()
+    .describe(
+      "The nutritional priority to optimize the dishes for; omit for no priority"
+    ),
 });
 
 export const generateRecipeOutputSchema = z.array(
@@ -26,7 +32,7 @@ export const generateRecipeOutputSchema = z.array(
 
 type GenerateRecipeInput = z.infer<typeof generateRecipeInputSchema>;
 
-const buildGenerateRecipePrompt = ({ ingredients, type }: GenerateRecipeInput) => `
+const buildGenerateRecipePrompt = ({ ingredients, type, nutrientPriority }: GenerateRecipeInput) => `
 You are a meal-planning assistant.
 
 Generate exactly 5 easy-to-cook dishes using ingredients from this list when possible:
@@ -36,6 +42,16 @@ ${
   type
     ? `All 5 dishes must be of the "${type}" type (e.g. brothy simmered dishes for "soup", pan-fried dishes tossed in a wok for "stir-fried").`
     : "The dishes can be of any type."
+}
+
+${
+  nutrientPriority === "muscle"
+    ? 'Prioritize dishes high in protein to support muscle recovery (e.g. lean meats, eggs, tofu, legumes).'
+    : nutrientPriority === "bone"
+    ? 'Prioritize dishes rich in calcium and vitamin D for bone health (e.g. dairy, small fish with bones, leafy greens).'
+    : nutrientPriority === "sick"
+    ? 'Prioritize easily digestible, gentle dishes suitable for sick days (e.g. broths, congee, steamed foods; avoid heavy, greasy or spicy dishes).'
+    : "There is no nutritional priority."
 }
 
 Return only JSON that matches the provided output schema.

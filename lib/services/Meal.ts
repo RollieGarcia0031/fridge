@@ -11,8 +11,16 @@ import { getSupabaseClient } from "@/lib/supabase/client";
  * @param filters - optional filters applied to the generated suggestions
  * @returns 5 suggested recipes
  */
+/**
+ * optional filters applied to the generated suggestions
+ */
+export interface MealFilters {
+  type?: "soup" | "stir-fried";
+  nutrientPriority?: "muscle" | "bone" | "sick";
+}
+
 export async function getRecommendedMeals(
-  filters?: { type?: "soup" | "stir-fried" }
+  filters?: MealFilters
 ): Promise<Recipe[]> {
 
   const refreshToken = await getSupabaseClient().auth.getSession();
