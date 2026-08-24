@@ -17,6 +17,10 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 export interface MealFilters {
   type?: "soup" | "stir-fried";
   nutrientPriority?: "muscle" | "bone" | "sick";
+  /**
+   * when true the AI may include ingredients beyond the user's inventory
+   */
+  allowSuggestedIngredients?: boolean;
 }
 
 export async function getRecommendedMeals(

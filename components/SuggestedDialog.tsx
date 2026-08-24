@@ -15,6 +15,7 @@ export default function SuggestedDialog() {
     isLoadingResponse,
     dishType,
     nutrientPriority,
+    allowSuggestedIngredients,
   } = useDashboardContext()!;
 
   const activeFilterLabel =
@@ -52,6 +53,11 @@ export default function SuggestedDialog() {
               {nutrientPriorityLabel && (
                 <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                   {nutrientPriorityLabel}
+                </span>
+              )}
+              {allowSuggestedIngredients && (
+                <span className="text-[10px] font-bold uppercase tracking-widest bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full">
+                  Extra ingredients
                 </span>
               )}
             </h2>

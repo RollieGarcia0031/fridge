@@ -16,8 +16,8 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [x] Route passes body field through; context state; UI selector.
 
 ### 3. "Can suggest more ingredients" flag (true | false)
-- [ ] `generateRecipeInputSchema`: `allowSuggestedIngredients: z.boolean().optional()` (default `false`). When true, the prompt should explicitly allow extra ingredients beyond the input list and the output `ingredients` arrays may include non-inventory items.
-- [ ] Thread through route body → flow. Add a checkbox/toggle in `app/page.tsx`.
+- [x] `generateRecipeInputSchema`: `allowSuggestedIngredients: z.boolean().optional()` (default `false`). When true, the prompt should explicitly allow extra ingredients beyond the input list and the output `ingredients` arrays may include non-inventory items.
+- [x] Thread through route body → flow. Add a checkbox/toggle in `app/page.tsx`.
 
 ## Input modes (plan: bonus)
 
@@ -114,7 +114,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 
 - [x] 1. Dish type filter
 - [x] 2. Nutrient priority
-- [ ] 3. Allow suggested ingredients flag
+- [x] 3. Allow suggested ingredients flag
 - [x] 4. Autocomplete typing
 - [x] 5. Indicate if ingredient is already taken
 - [x] 6. Fridge mode (partial)
