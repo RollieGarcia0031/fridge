@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { Oval, TailSpin } from "react-loader-spinner";
-import { IoArrowBackOutline, IoTimeOutline, IoPeopleOutline, IoBulbOutline, IoWarningOutline } from "react-icons/io5";
+import { IoArrowBackOutline, IoTimeOutline, IoPeopleOutline, IoBulbOutline, IoWarningOutline, IoLogoYoutube } from "react-icons/io5";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -12,7 +12,7 @@ export default function Recipe() {
   const router = useRouter();
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [instructions, setInstructions] = useState<Instrcutions | null>(null);
+  const [instructions, setInstructions] = useState<Instructions | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function refreshInstructions() {
@@ -87,7 +87,7 @@ export default function Recipe() {
   );
 }
 
-function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
+function InstructionPanel({ instructions }: { instructions: Instructions }) {
   return (
     <div className="card bg-bg-card p-0 overflow-hidden shadow-2xl border-white/5">
       {/* Hero Header */}
@@ -222,6 +222,21 @@ function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
           </section>
         )}
 
+        {/* Tutorial */}
+        {instructions.tutorial_url && isValidHttpUrl(instructions.tutorial_url) && (
+          <section className="flex justify-center">
+            <a
+              href={instructions.tutorial_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-6 py-3 rounded-xl border border-border bg-bg-subtle/50 text-text font-medium hover:border-primary hover:text-primary transition-colors"
+            >
+              <IoLogoYoutube className="text-2xl text-red-500" aria-hidden="true" />
+              <span>Watch a tutorial</span>
+            </a>
+          </section>
+        )}
+
         {/* Footer actions */}
         <div className="pt-8 border-t border-border flex justify-center">
             <button 
@@ -236,7 +251,16 @@ function InstructionPanel({ instructions }: { instructions: Instrcutions }) {
   );
 }
 
-async function fetchInstruction(recipe: Recipe): Promise<Instrcutions> {
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+async function fetchInstruction(recipe: Recipe): Promise<Instructions> {
   const refreshToken = await getSupabaseClient().auth.getSession();
   const response = await fetch("/api/ai/meal-recipe", {
     method: "POST",

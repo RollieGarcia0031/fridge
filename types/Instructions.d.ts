@@ -1,4 +1,4 @@
-interface Instrcutions {
+interface Instructions {
     cook_time_minutes: number;
     
     ingredients: {
@@ -18,4 +18,5 @@ interface Instrcutions {
 
     tips: string[];
     warnings?: string[];
+    tutorial_url?: string;
 }   

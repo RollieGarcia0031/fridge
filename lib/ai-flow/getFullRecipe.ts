@@ -30,6 +30,12 @@ export const getFullRecipeOutputSchema = z.object({
   ),
   tips: z.array(z.string()).describe("Helpful cooking tips"),
   warnings: z.array(z.string()).optional().describe("Safety or allergy warnings"),
+  tutorial_url: z
+    .string()
+    .optional()
+    .describe(
+      "URL of a real YouTube or instructional video tutorial for this dish, if one exists. Omit entirely if you cannot name one"
+    ),
 });
 
 type GetFullRecipeInput = z.infer<typeof getFullRecipeInputSchema>;
@@ -42,6 +48,8 @@ You are a JSON-only cooking API.
 
 Generate a complete cooking guide for "${recipe_name}" using ONLY these ingredients:
 ${ingredients.join(", ")}
+
+If you know of a real, well-known YouTube or instructional video tutorial for "${recipe_name}", set "tutorial_url" to its full URL. Never invent or guess URLs; if you are not certain a video exists, omit "tutorial_url" completely.
 
 Return only JSON that matches the provided schema.
 `;

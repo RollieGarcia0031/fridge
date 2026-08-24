@@ -51,8 +51,8 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 ## Instructions (plan: main feature)
 
 ### 10. Recommended tutorial (video)
-- [ ] `lib/ai-flow/getFullRecipe.ts`: add an optional `tutorial_url` / `video` field to `getFullRecipeOutputSchema` and prompt the model for a YouTube/instructional video recommendation. `app/recipe/page.tsx` should render a "Watch a tutorial" link.
-- [ ] Fallback: if the model can't produce a URL, hide the section.
+- [x] `lib/ai-flow/getFullRecipe.ts`: add an optional `tutorial_url` / `video` field to `getFullRecipeOutputSchema` and prompt the model for a YouTube/instructional video recommendation. `app/recipe/page.tsx` should render a "Watch a tutorial" link.
+- [x] Fallback: if the model can't produce a URL, hide the section.
 
 ### 13. Recipe page missing fields from AI output
 - [x] `app/recipe/page.tsx` currently drops `tips`, `warnings`, and the detailed `ingredients` list from the flow output. Render these sections: tips as helpful cooking tips, warnings as safety/allergy notes, ingredients with name + quantity.
@@ -121,7 +121,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] 7. Market mode
 - [ ] 8. Instant generation
 - [x] 9. Show list of suggestions
-- [ ] 10. Recommended tutorial (video)
+- [x] 10. Recommended tutorial (video)
 - [ ] 11. Customize fridge inventory (quantity / expiry)
 - [ ] 12. Presets of fridge inventory
 - [x] 13. Recipe page missing fields from AI output
