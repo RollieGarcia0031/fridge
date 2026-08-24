@@ -72,6 +72,12 @@ interface DashboardContextProps {
   setNutrientPriority: (nutrientPriority: NutrientPriority) => void;
 
   /**
+   * whether the AI may suggest ingredients beyond the user's inventory when generating recipe suggestions
+   */
+  allowSuggestedIngredients: boolean;
+  setAllowSuggestedIngredients: (allowSuggestedIngredients: boolean) => void;
+
+  /**
    * refresh the content of suggestion dialog
    */
   refreshRecommendedRecipes: () => Promise<void>;
@@ -146,6 +152,12 @@ export function DashboardProvider({children}:{
   // mirrors nutrientPriority so in-flight suggestion requests can detect filter changes
   const nutrientPriorityRef = useRef<NutrientPriority>("");
 
+  // allow-suggested-ingredients flag for recipe suggestions (false = inventory only)
+  const [allowSuggestedIngredients, setAllowSuggestedIngredients] = useState<boolean>(false);
+
+  // mirrors allowSuggestedIngredients so in-flight suggestion requests can detect filter changes
+  const allowSuggestedIngredientsRef = useRef<boolean>(false);
+
   // id of the most recent suggestion request; older requests are stale
   const latestRequestIdRef = useRef(0);
 
@@ -175,6 +187,21 @@ export function DashboardProvider({children}:{
 
     nutrientPriorityRef.current = value;
     setNutrientPriority(value);
+
+    invalidateInFlightSuggestions();
+  }
+
+  /**
+   * update the allow-suggested-ingredients flag and invalidate any in-flight suggestion request
+   */
+  function updateAllowSuggestedIngredients(value: boolean){
+    if (value === allowSuggestedIngredientsRef.current){
+      setAllowSuggestedIngredients(value);
+      return;
+    }
+
+    allowSuggestedIngredientsRef.current = value;
+    setAllowSuggestedIngredients(value);
 
     invalidateInFlightSuggestions();
   }
@@ -215,11 +242,13 @@ export function DashboardProvider({children}:{
 
       const requestedDishType = dishTypeRef.current;
       const requestedPriority = nutrientPriorityRef.current;
+      const requestedAllowSuggested = allowSuggestedIngredientsRef.current;
 
       const filters: MealFilters = {};
       if (requestedDishType) filters.type = requestedDishType;
       if (requestedPriority) filters.nutrientPriority = requestedPriority;
-      const hasFilters = Boolean(requestedDishType || requestedPriority);
+      if (requestedAllowSuggested) filters.allowSuggestedIngredients = true;
+      const hasFilters = Boolean(requestedDishType || requestedPriority || requestedAllowSuggested);
 
       const data = await getRecommendedMeals(hasFilters ? filters : undefined);
 
@@ -228,6 +257,7 @@ export function DashboardProvider({children}:{
       // a filter changed while this request was pending; discard the stale result
       if (requestedDishType !== dishTypeRef.current) return;
       if (requestedPriority !== nutrientPriorityRef.current) return;
+      if (requestedAllowSuggested !== allowSuggestedIngredientsRef.current) return;
 
       setSuggestedRecipes(data!);
     } catch (error) {
@@ -284,6 +314,8 @@ export function DashboardProvider({children}:{
       setDishType: updateDishType,
       nutrientPriority,
       setNutrientPriority: updateNutrientPriority,
+      allowSuggestedIngredients,
+      setAllowSuggestedIngredients: updateAllowSuggestedIngredients,
       refreshRecommendedRecipes,
       fetchOwnedIngredients,
       RefreshIngredientList,

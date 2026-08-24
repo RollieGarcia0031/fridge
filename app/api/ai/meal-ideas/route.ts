@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
  *   Headers: 
  *     Authorization: Bearer <Supabase token>
  *   Body (optional):
- *     { "type": "soup" | "stir-fried", "nutrientPriority": "muscle" | "bone" | "sick" }
+ *     { "type": "soup" | "stir-fried", "nutrientPriority": "muscle" | "bone" | "sick", "allowSuggestedIngredients": boolean }
  *
  * response:
  * [
@@ -39,6 +39,8 @@ export async function POST(req: Request){
     let type: "soup" | "stir-fried" | undefined;
     // optional nutrient priority filter from request body; ignored when absent/invalid
     let nutrientPriority: "muscle" | "bone" | "sick" | undefined;
+    // optional flag allowing the AI to suggest ingredients beyond the user's inventory; default false
+    let allowSuggestedIngredients: boolean | undefined;
     try {
       const body = await req.json();
       if (body?.type === "soup" || body?.type === "stir-fried")
@@ -49,13 +51,15 @@ export async function POST(req: Request){
         body?.nutrientPriority === "sick"
       )
         nutrientPriority = body.nutrientPriority;
+      if (body?.allowSuggestedIngredients === true)
+        allowSuggestedIngredients = true;
     } catch {
       // no body provided — keep filter unset
     }
 
     const ingredients = await getUserRecipes(data.user.id);
 
-    const result = await generateRecipeFlow({ingredients, type, nutrientPriority});
+    const result = await generateRecipeFlow({ingredients, type, nutrientPriority, allowSuggestedIngredients});
 
     return new NextResponse(JSON.stringify(result),{
       status: 200

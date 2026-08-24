@@ -56,6 +56,8 @@ function Home() {
     setDishType,
     nutrientPriority,
     setNutrientPriority,
+    allowSuggestedIngredients,
+    setAllowSuggestedIngredients,
     setSuggestedRecipes
   } = useDashboardContext()!;
 
@@ -174,6 +176,14 @@ function Home() {
     setNutrientPriority(value);
   };
 
+  const handleAllowSuggestedIngredientsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+
+    // drop stale suggestions so the dialog regenerates with the new flag
+    setSuggestedRecipes([]);
+    setAllowSuggestedIngredients(checked);
+  };
+
   const selectedIngredient = ingredients.find(
     (ingredient) => ingredient.id === selectedIngredientId,
   );
@@ -279,6 +289,21 @@ function Home() {
                       <option value="bone">Bone (calcium / vitamin D)</option>
                       <option value="sick">Sick day (easy to digest)</option>
                     </select>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="allowSuggestedIngredientsToggle"
+                      type="checkbox"
+                      checked={allowSuggestedIngredients}
+                      onChange={handleAllowSuggestedIngredientsChange}
+                      className="w-4 h-4 shrink-0 accent-primary cursor-pointer"
+                    />
+                    <label
+                      htmlFor="allowSuggestedIngredientsToggle"
+                      className="text-sm text-text-muted cursor-pointer select-none"
+                    >
+                      Let AI suggest extra ingredients beyond my fridge
+                    </label>
                   </div>
                   {ingredientsToAdd.length > 0 && (
                     <div className="space-y-3 pt-4 border-t border-border/50">

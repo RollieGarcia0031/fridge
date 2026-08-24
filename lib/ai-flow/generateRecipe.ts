@@ -16,6 +16,12 @@ export const generateRecipeInputSchema = z.object({
     .describe(
       "The nutritional priority to optimize the dishes for; omit for no priority"
     ),
+  allowSuggestedIngredients: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether the dishes may use extra ingredients beyond the given list; omit or false to restrict to the list only (default false)"
+    ),
 });
 
 export const generateRecipeOutputSchema = z.array(
@@ -32,11 +38,22 @@ export const generateRecipeOutputSchema = z.array(
 
 type GenerateRecipeInput = z.infer<typeof generateRecipeInputSchema>;
 
-const buildGenerateRecipePrompt = ({ ingredients, type, nutrientPriority }: GenerateRecipeInput) => `
+const buildGenerateRecipePrompt = ({
+  ingredients,
+  type,
+  nutrientPriority,
+  allowSuggestedIngredients,
+}: GenerateRecipeInput) => `
 You are a meal-planning assistant.
 
 Generate exactly 5 easy-to-cook dishes using ingredients from this list when possible:
 ${ingredients.join(", ")}
+
+${
+  allowSuggestedIngredients
+    ? `The dishes may additionally use a few common pantry items and other sensible ingredients beyond the list above; when they do, include those extra ingredients in each dish's "ingredients" array alongside the ones from the list. Still feature the listed ingredients as the stars of the dishes whenever possible.`
+    : `Only use the ingredients from the list above; do not introduce any other ingredients.`
+}
 
 ${
   type
