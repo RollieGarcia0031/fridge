@@ -23,6 +23,8 @@ import { getFullRecipeFlow } from "@/lib/ai-flow/getFullRecipe";
  *       instructions: string;
  *     }]
  *     tips: string[]
+ *     warnings?: string[]
+ *     tutorial_url?: string
  */
 export async function POST(req: Request){
   try {
