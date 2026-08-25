@@ -125,22 +125,34 @@ export async function POST(req: Request) {
     )
   }
 
-  const rowsToUpsert = normalizedItems.map(item => ({
-    user_id: user.id,
-    ingredient_id: item.id,
-    quantity: item.quantity != null ? String(item.quantity) : null,
-    expires_at: item.expires_at || null,
-  }));
-
   // 4. Insert into user_ingredients
-  const { data: addedIngredients, error } = await (await supabase())
-    .from("user_ingredients")
-    .upsert(
-      rowsToUpsert, {
-        onConflict: "user_id,ingredient_id"
-      }
-    )
-    .select(`
+  //    Only include quantity/expires_at when the request explicitly provides them
+  //    so existing values are not overwritten with null for legacy ids-only items.
+  const baseOnlyRows: { user_id: string; ingredient_id: string }[] = [];
+  const extendedRows: {
+    user_id: string;
+    ingredient_id: string;
+    quantity: string;
+    expires_at: string;
+  }[] = [];
+
+  for (const item of normalizedItems) {
+    const hasOptional =
+      item.quantity != null || (item.expires_at != null && item.expires_at !== "");
+    if (hasOptional) {
+      extendedRows.push({
+        user_id: user.id,
+        ingredient_id: item.id,
+        quantity: item.quantity != null ? String(item.quantity) : "",
+        expires_at: item.expires_at || "",
+      });
+    } else {
+      baseOnlyRows.push({ user_id: user.id, ingredient_id: item.id });
+    }
+  }
+
+  const upsertOpts = { onConflict: "user_id,ingredient_id" as const };
+  const selectClause = `
       id,
       quantity,
       expires_at,
@@ -150,10 +162,30 @@ export async function POST(req: Request) {
         name,
         category
       )
-    `);
+    `;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  let addedIngredients: unknown[] = [];
+
+  if (baseOnlyRows.length > 0) {
+    const { data, error } = await (await supabase())
+      .from("user_ingredients")
+      .upsert(baseOnlyRows, upsertOpts)
+      .select(selectClause);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    addedIngredients = data ?? [];
+  }
+
+  if (extendedRows.length > 0) {
+    const { data, error } = await (await supabase())
+      .from("user_ingredients")
+      .upsert(extendedRows, upsertOpts)
+      .select(selectClause);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    addedIngredients = addedIngredients.concat(data ?? []);
   }
 
   revalidateTag("user-ingredients", "max");
