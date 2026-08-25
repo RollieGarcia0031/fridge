@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createSupabaseServerClient as supabase } from "@/lib/supabase/server";
-import getUserRecipes from "@/lib/db/getUserRecipes";
 
 /**
  * Obtain the list of ingredients owned by the logged user
@@ -23,6 +22,7 @@ export async function GET(req: Request){
       .select(`
         id,
         quantity,
+        expires_at,
         ingredient:ingredients (
           id,
           name,
@@ -41,11 +41,16 @@ export async function GET(req: Request){
 }
 
 /**
- * add ingredient's to user's inventory
+ * add ingredients to user's inventory
  *
- * Request:
+ * Request (new format):
  * {
- *    ids: string[] // array of primary keys of the ingredient
+ *    items: { id: string, quantity?: number, expires_at?: string }[]
+ * }
+ *
+ * Legacy format (still accepted):
+ * {
+ *    ids: string[]
  * }
  */
 export async function POST(req: Request) {
@@ -63,33 +68,53 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 2. Parse body
+  // 2. Parse body — support both { items: [...] } and legacy { ids: [...] }
   const body = await req.json();
-  const { ids } = body;
+  const { items, ids } = body;
 
-  if (!ids || !Array.isArray(ids)) {
+  let normalizedItems: { id: string; quantity?: number; expires_at?: string }[] = [];
+
+  if (items && Array.isArray(items)) {
+    normalizedItems = items.map((item: { id?: string; quantity?: number | string; expires_at?: string }) => ({
+      id: item.id as string,
+      quantity: item.quantity != null ? Number(item.quantity) : undefined,
+      expires_at: item.expires_at || undefined,
+    }));
+  } else if (ids && Array.isArray(ids)) {
+    normalizedItems = ids.map((id: string) => ({ id }));
+  } else {
     return NextResponse.json(
-      { error: "ids is required" },
+      { error: "items (array of { id, quantity?, expires_at? }) is required" },
       { status: 400 }
-    )
+    );
   }
 
-  // 3. Validate ingredient exists
+  if (normalizedItems.length === 0) {
+    return NextResponse.json(
+      { error: "items must not be empty" },
+      { status: 400 }
+    );
+  }
+
+  // 3. Validate ingredients exist
+  const ingredientIds = normalizedItems.map(item => item.id);
   const { data: ingredients, error: ingredientError } = await (await supabase())
     .from("ingredients")
     .select("id, name, category")
-    .in("id", ids);
+    .in("id", ingredientIds);
 
-  if (ingredientError || ingredients.length != ids.length) {
+  if (ingredientError || ingredients.length != ingredientIds.length) {
     return NextResponse.json(
       { error: "Invalid ingredient_id" },
       { status: 400 }
     )
   }
 
-  const rowsToUpsert = ids.map(ingredient_id => ({
+  const rowsToUpsert = normalizedItems.map(item => ({
     user_id: user.id,
-    ingredient_id
+    ingredient_id: item.id,
+    quantity: item.quantity != null ? String(item.quantity) : null,
+    expires_at: item.expires_at || null,
   }));
 
   // 4. Insert into user_ingredients
@@ -102,6 +127,8 @@ export async function POST(req: Request) {
     )
     .select(`
       id,
+      quantity,
+      expires_at,
       created_at,
       ingredient:ingredients (
         id,

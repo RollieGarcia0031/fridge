@@ -13,7 +13,7 @@ import {
   NutrientPriority,
 } from "@/context/DashboardContext";
 import Select, { SingleValue, components as selectComponents } from "react-select";
-import { saveIngredient, removeIngredients } from "@/lib/services/Ingredients";
+import { saveIngredient, removeIngredients, IngredientItem } from "@/lib/services/Ingredients";
 import { toast } from "react-toastify";
 import { MdDeleteOutline } from "react-icons/md";
 
@@ -24,6 +24,7 @@ interface ingredientOption extends inputOption {
 export interface inputOption {
   label: string;
   value: string;
+  quantity?: number;
 }
 
 export default function Dashboard() {
@@ -324,14 +325,34 @@ function Home() {
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, scale: 0.95 }}
                               key={ingredient.value}
-                              className="flex items-center justify-between p-2 bg-bg-subtle/50 border border-border rounded-lg group"
+                              className="flex items-center gap-2 p-2 bg-bg-subtle/50 border border-border rounded-lg group"
                             >
-                              <span className="text-sm font-medium">{ingredient.label}</span>
+                              <span className="text-sm font-medium flex-1 truncate">{ingredient.label}</span>
+                              <input
+                                type="number"
+                                min={0}
+                                step={1}
+                                placeholder="Qty"
+                                value={ingredient.quantity ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setIngredientsToAdd(prev =>
+                                    prev.map(i =>
+                                      i.value === ingredient.value
+                                        ? { ...i, quantity: val === "" ? undefined : Number(val) }
+                                        : i
+                                    )
+                                  );
+                                }}
+                                className="w-16 h-7 text-xs text-center bg-bg-subtle border border-border rounded
+                                  focus:border-primary focus:outline-none [appearance:textfield]
+                                  [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
                               <button
                                 onClick={() => {
                                   setIngredientsToAdd(prev => prev.filter(i => i.value !== ingredient.value));
                                 }}
-                                className="text-text-muted hover:text-red-500 transition-colors"
+                                className="text-text-muted hover:text-red-500 transition-colors shrink-0"
                               >
                                 <IoIosCloseCircleOutline className="text-lg" />
                               </button>
@@ -361,9 +382,12 @@ function Home() {
     try {
       setIsLoadingAddIngredient(true);
 
-      const selectedIdsToAdd = ingredientsToAdd.map((ingredient) => ingredient.value)
+      const items: IngredientItem[] = ingredientsToAdd.map((ingredient) => ({
+        id: ingredient.value,
+        quantity: ingredient.quantity,
+      }));
 
-      const newOwnedIngredients = await saveIngredient(selectedIdsToAdd);
+      const newOwnedIngredients = await saveIngredient(items);
       setOwnedIngredients([...ownedIngredients, ...newOwnedIngredients]);
       setIngredientsToAdd([]);
       setSelectedIngredientId("");
@@ -485,7 +509,14 @@ function OwnedIngredientsPane() {
                   `}
                   onClick={()=>handleIngredientCardClick(ownedIngredient.id || "")}
                 >
-                  <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
+                    {ownedIngredient.quantity != null && ownedIngredient.quantity > 0 && (
+                      <span className="text-[10px] text-text-muted bg-bg-card px-1.5 py-0.5 rounded">
+                        x{ownedIngredient.quantity}
+                      </span>
+                    )}
+                  </div>
                   <button
                     onClick={() => handleRemoveIngredient(ownedIngredient.id)}
                     className="p-1 transition-colors text-text-muted hover:text-red-500"
