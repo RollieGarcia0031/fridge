@@ -75,8 +75,23 @@ export async function POST(req: Request) {
   let normalizedItems: { id: string; quantity?: number; expires_at?: string }[] = [];
 
   if (items && Array.isArray(items)) {
-    normalizedItems = items.map((item: { id?: string; quantity?: number | string; expires_at?: string }) => ({
-      id: item.id as string,
+    const rejected = items.find(
+      (item: unknown) =>
+        item == null ||
+        typeof item !== "object" ||
+        !("id" in item) ||
+        typeof (item as Record<string, unknown>).id !== "string" ||
+        !(item as Record<string, unknown>).id
+    );
+    if (rejected !== undefined) {
+      return NextResponse.json(
+        { error: "Each item must be an object with a string id" },
+        { status: 400 }
+      );
+    }
+
+    normalizedItems = items.map((item: { id: string; quantity?: number | string; expires_at?: string }) => ({
+      id: item.id,
       quantity: item.quantity != null ? Number(item.quantity) : undefined,
       expires_at: item.expires_at || undefined,
     }));
