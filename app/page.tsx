@@ -392,7 +392,8 @@ function OwnedIngredientsPane() {
     setOwnedIngredients, ownedIngredients,
     isLoadingOwnedIngredients,
     selectedOwnedIngredientId, setSelectedOwnedIngredientId,
-    isDeletingOwnedIngredients, setIsDeletingOwnedIngredients
+    isDeletingOwnedIngredients, setIsDeletingOwnedIngredients,
+    fetchOwnedIngredients
   } = useDashboardContext()!;
 
   function handleIngredientCardClick(id: string){
@@ -459,6 +460,8 @@ function OwnedIngredientsPane() {
     } catch (error) {
       console.error(error);
       toast.error("Failed to update ingredient");
+      // the optimistic update may not match the server: restore the true state
+      await fetchOwnedIngredients();
     }
   }
 
@@ -515,7 +518,10 @@ function OwnedIngredientsPane() {
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
                     <button
-                      onClick={() => handleRemoveIngredient(ownedIngredient.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveIngredient(ownedIngredient.id);
+                      }}
                       className="p-1 transition-colors text-text-muted hover:text-red-500"
                     >
                       <IoIosCloseCircleOutline className="text-xl" />

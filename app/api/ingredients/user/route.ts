@@ -74,8 +74,16 @@ export async function POST(req: Request) {
   }
 
   // 2. Parse body
-  const body = await req.json();
-  const { ids, rows } = body;
+  const body = await req.json().catch(() => null);
+
+  if (!body || typeof body !== "object") {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 }
+    )
+  }
+
+  const { ids, rows } = body as { ids?: unknown; rows?: unknown };
 
   const hasIds = Array.isArray(ids) && ids.length > 0;
   const hasRows = Array.isArray(rows) && rows.length > 0;
@@ -87,12 +95,19 @@ export async function POST(req: Request) {
     )
   }
 
+  if (hasRows && !rows.every((row) => row && typeof row === "object" && typeof (row as { ingredient_id?: unknown }).ingredient_id === "string")) {
+    return NextResponse.json(
+      { error: "rows must contain ingredient_id" },
+      { status: 400 }
+    )
+  }
+
   let entries: Array<{ ingredient_id: string; quantity?: string; expires_at?: string }>;
 
   if (hasRows) {
-    entries = rows;
+    entries = rows as Array<{ ingredient_id: string; quantity?: string; expires_at?: string }>;
   } else {
-    entries = ids.map((ingredient_id: string) => ({ ingredient_id }));
+    entries = (ids as string[]).map((ingredient_id: string) => ({ ingredient_id }));
   }
 
   const ingredientIds = entries.map((e) => e.ingredient_id);
