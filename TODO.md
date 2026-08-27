@@ -71,9 +71,9 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] `lib/services/` service + `DashboardContext` state for presets.
 
 ### 14. Quantity support in POST /api/ingredients/user
-- [ ] Update `POST /api/ingredients/user` to accept an array of objects `{ id: string, quantity?: number, expires_at?: string }` instead of just `{ ids: string[] }`.
-- [ ] Update `lib/services/Ingredients.ts` to support quantity/expiry when adding ingredients.
-- [ ] Update UI to allow setting quantity when adding ingredients.
+- [x] Update `POST /api/ingredients/user` to accept an array of objects `{ id: string, quantity?: number, expires_at?: string }` instead of just `{ ids: string[] }`.
+- [x] Update `lib/services/Ingredients.ts` to support quantity/expiry when adding ingredients.
+- [x] Update UI to allow setting quantity when adding ingredients.
 
 ## Notes / conventions
 - All route changes keep the Bearer-token auth pattern from `app/api/ingredients/user/route.ts`.
@@ -125,7 +125,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] 11. Customize fridge inventory (quantity / expiry)
 - [ ] 12. Presets of fridge inventory
 - [x] 13. Recipe page missing fields from AI output
-- [ ] 14. Quantity support in POST /api/ingredients/user
+- [x] 14. Quantity support in POST /api/ingredients/user
 - [ ] 15. Recipe saving / favorites
 - [ ] 16. Dietary restrictions / preferences
 - [ ] 17. Meal planning calendar

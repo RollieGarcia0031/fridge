@@ -1,5 +1,11 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
 
+export interface IngredientItem {
+  id: string;
+  quantity?: number;
+  expires_at?: string;
+}
+
 // Cache variables for client-side persistence within the session
 let allIngredientsCache: Ingredient[] | null = null;
 let ownedIngredientsCache: OwnedIngredient[] | null = null;
@@ -57,24 +63,29 @@ export async function getAllIngredients(forceRefresh = false): Promise<Ingredien
 }
 
 /**
- * Save a new ingredient in the user's inventory
- * 
- * @param ingredient_ids array of primary keys of the ingredient
- * @returns 
+ * Save ingredients in the user's inventory
+ *
+ * @param items - Array of ingredient ids (string[]) or objects with { id, quantity?, expires_at? }
+ * @returns List of saved ingredients
  */
-export async function saveIngredient(ingredient_ids: string[]):Promise<OwnedIngredient[]>{
+export async function saveIngredient(items: string[] | IngredientItem[]): Promise<OwnedIngredient[]> {
   const refreshToken = await getSupabaseClient().auth.getSession();
 
   if (!refreshToken.data.session) throw new Error("Failed to retrieve session");
 
-  const res = await fetch("/api/ingredients/user",{
+  // Normalize: convert string[] to IngredientItem[] format
+  const normalizedItems: IngredientItem[] = items.map(item =>
+    typeof item === "string" ? { id: item } : item
+  );
+
+  const res = await fetch("/api/ingredients/user", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       'Authorization': `Bearer ${refreshToken.data.session?.access_token}`
     },
-    body: JSON.stringify({ ids: ingredient_ids })
-  })
+    body: JSON.stringify({ items: normalizedItems })
+  });
 
   if (!res.ok) throw new Error("Failed to save ingredient");
 
