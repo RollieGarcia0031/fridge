@@ -6,6 +6,10 @@ interface OwnedIngredient {
   /**
    * The quantity of the owned ingredient
    */
-  quantity: number;
+  quantity: string | null;
+  /**
+   * The date the owned ingredient expires (yyyy-mm-dd)
+   */
+  expires_at: string | null;
   ingredient: Ingredient;
 }

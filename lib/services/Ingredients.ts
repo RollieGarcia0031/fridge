@@ -85,6 +85,40 @@ export async function saveIngredient(ingredient_ids: string[]):Promise<OwnedIngr
 }
 
 /**
+ * Update (or set) the quantity / expiry of an owned ingredient
+ *
+ * Uses the upsert semantics of POST /api/ingredients/user keyed on
+ * (user_id, ingredient_id), so it can both create and update a row.
+ *
+ * @param ingredient_id primary key of the ingredient
+ * @param metadata optional quantity and expiry to store
+ */
+export async function updateOwnedIngredient(
+  ingredient_id: string,
+  metadata: { quantity?: string; expires_at?: string } = {},
+): Promise<OwnedIngredient[]> {
+  const refreshToken = await getSupabaseClient().auth.getSession();
+
+  if (!refreshToken.data.session) throw new Error("Failed to retrieve session");
+
+  const res = await fetch("/api/ingredients/user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${refreshToken.data.session?.access_token}`,
+    },
+    body: JSON.stringify({ rows: [{ ingredient_id, ...metadata }] }),
+  });
+
+  if (!res.ok) throw new Error("Failed to update ingredient");
+
+  // Invalidate cache since data has changed
+  ownedIngredientsCache = null;
+
+  return (await res.json()).ingredients;
+}
+
+/**
  * Remove a single ingredient from a user's inventory
  * 
  * @param id primary key of ingredient from user's inventory

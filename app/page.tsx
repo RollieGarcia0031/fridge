@@ -13,7 +13,11 @@ import {
   NutrientPriority,
 } from "@/context/DashboardContext";
 import Select, { SingleValue, components as selectComponents } from "react-select";
-import { saveIngredient, removeIngredients } from "@/lib/services/Ingredients";
+import {
+  saveIngredient,
+  removeIngredients,
+  updateOwnedIngredient,
+} from "@/lib/services/Ingredients";
 import { toast } from "react-toastify";
 import { MdDeleteOutline } from "react-icons/md";
 
@@ -435,6 +439,29 @@ function OwnedIngredientsPane() {
     }
   }
 
+  /**
+   * Update the quantity / expiry of an owned ingredient optimistically,
+   * then persist the change to the backend. On failure, reload from server.
+   */
+  async function handleOwnedIngredientChange(
+    ownedIngredient: OwnedIngredient,
+    patch: { quantity?: string; expires_at?: string },
+  ) {
+    // optimistic local update
+    setOwnedIngredients(
+      ownedIngredients.map((oi) =>
+        oi.id === ownedIngredient.id ? { ...oi, ...patch } : oi,
+      ),
+    );
+
+    try {
+      await updateOwnedIngredient(ownedIngredient.ingredient.id, patch);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update ingredient");
+    }
+  }
+
   return (
     <div className="card p-6 flex flex-col h-[500px]">
       <div className="flex items-center justify-between mb-6">
@@ -479,19 +506,49 @@ function OwnedIngredientsPane() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                  className={`flex items-center justify-between
+                  className={`flex flex-col gap-2
                     p-3 bg-bg-subtle border ${isSelectedId(ownedIngredient.id)? 'border-accent':'border-border'} rounded-lg
                     hover:${isSelectedId(ownedIngredient.id)? '':'border-primary/30'} transition-colors
                   `}
                   onClick={()=>handleIngredientCardClick(ownedIngredient.id || "")}
                 >
-                  <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
-                  <button
-                    onClick={() => handleRemoveIngredient(ownedIngredient.id)}
-                    className="p-1 transition-colors text-text-muted hover:text-red-500"
-                  >
-                    <IoIosCloseCircleOutline className="text-xl" />
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
+                    <button
+                      onClick={() => handleRemoveIngredient(ownedIngredient.id)}
+                      className="p-1 transition-colors text-text-muted hover:text-red-500"
+                    >
+                      <IoIosCloseCircleOutline className="text-xl" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="text"
+                      defaultValue={ownedIngredient.quantity ?? ""}
+                      placeholder="Qty"
+                      onBlur={(e) =>
+                        handleOwnedIngredientChange(ownedIngredient, { quantity: e.target.value })
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                      className="w-20 h-8 px-2 text-xs bg-bg-card border border-border rounded-md
+                        focus:border-primary focus:outline-none"
+                    />
+                    <input
+                      type="date"
+                      value={ownedIngredient.expires_at ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        handleOwnedIngredientChange(ownedIngredient, {
+                          expires_at: value ? value : "",
+                        });
+                      }}
+                      className="flex-1 h-8 px-2 text-xs bg-bg-card border border-border rounded-md
+                        focus:border-primary focus:outline-none"
+                    />
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>

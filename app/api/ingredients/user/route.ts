@@ -23,6 +23,7 @@ export async function GET(req: Request){
       .select(`
         id,
         quantity,
+        expires_at,
         ingredient:ingredients (
           id,
           name,
@@ -41,11 +42,20 @@ export async function GET(req: Request){
 }
 
 /**
- * add ingredient's to user's inventory
+ * add ingredient's to user's inventory (or update their quantity / expiry)
  *
- * Request:
+ * Request (ids form — add only):
  * {
  *    ids: string[] // array of primary keys of the ingredient
+ * }
+ *
+ * Request (rows form — add or update with metadata):
+ * {
+ *    rows: {
+ *      ingredient_id: string,
+ *      quantity?: string,
+ *      expires_at?: string // ISO date (yyyy-mm-dd)
+ *    }[]
  * }
  */
 export async function POST(req: Request) {
@@ -65,32 +75,53 @@ export async function POST(req: Request) {
 
   // 2. Parse body
   const body = await req.json();
-  const { ids } = body;
+  const { ids, rows } = body;
 
-  if (!ids || !Array.isArray(ids)) {
+  const hasIds = Array.isArray(ids) && ids.length > 0;
+  const hasRows = Array.isArray(rows) && rows.length > 0;
+
+  if (!hasIds && !hasRows) {
     return NextResponse.json(
-      { error: "ids is required" },
+      { error: "ids or rows is required" },
       { status: 400 }
     )
   }
+
+  let entries: Array<{ ingredient_id: string; quantity?: string; expires_at?: string }>;
+
+  if (hasRows) {
+    entries = rows;
+  } else {
+    entries = ids.map((ingredient_id: string) => ({ ingredient_id }));
+  }
+
+  const ingredientIds = entries.map((e) => e.ingredient_id);
 
   // 3. Validate ingredient exists
   const { data: ingredients, error: ingredientError } = await (await supabase())
     .from("ingredients")
     .select("id, name, category")
-    .in("id", ids);
+    .in("id", ingredientIds);
 
-  if (ingredientError || ingredients.length != ids.length) {
+  if (ingredientError || ingredients.length != ingredientIds.length) {
     return NextResponse.json(
       { error: "Invalid ingredient_id" },
       { status: 400 }
     )
   }
 
-  const rowsToUpsert = ids.map(ingredient_id => ({
-    user_id: user.id,
-    ingredient_id
-  }));
+  const rowsToUpsert = entries.map(({ ingredient_id, quantity, expires_at }) => {
+    const row: Record<string, unknown> = {
+      user_id: user.id,
+      ingredient_id
+    };
+
+    if (quantity !== undefined) row.quantity = quantity;
+    if (expires_at !== undefined && expires_at !== "") row.expires_at = expires_at;
+    if (expires_at === "") row.expires_at = null;
+
+    return row;
+  });
 
   // 4. Insert into user_ingredients
   const { data: addedIngredients, error } = await (await supabase())
@@ -103,6 +134,8 @@ export async function POST(req: Request) {
     .select(`
       id,
       created_at,
+      quantity,
+      expires_at,
       ingredient:ingredients (
         id,
         name,
