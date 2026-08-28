@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
 import SuggestedDialog from "@/components/SuggestedDialog";
@@ -436,7 +436,10 @@ function OwnedIngredientsPane() {
 
   // working copy of quantity / expiry per owned ingredient, committed on blur
   const [edits, setEdits] = useState<Record<string, { quantity: string; expires_at: string }>>({});
-  const [savingId, setSavingId] = useState<string | null>(null);
+  // per-ingredient save state so other rows keep editing while one is pending
+  const [savingIds, setSavingIds] = useState<Record<string, boolean>>({});
+  // in-flight save promises keyed by owned-ingredient id; removal waits on them
+  const inFlightSavesRef = useRef<Map<string, Promise<void>>>(new Map());
 
   useEffect(() => {
     setEdits(prev => {
@@ -481,13 +484,17 @@ function OwnedIngredientsPane() {
     if (isDeletingOwnedIngredients) return;
     try {
       setIsDeletingOwnedIngredients(true);
+
+      // wait for any in-flight save of a row being deleted so the upsert
+      // cannot recreate the row after the delete lands
+      const pendingSaves = [...inFlightSavesRef.current.entries()]
+        .filter(([id]) => selectedOwnedIngredientId.includes(id))
+        .map(([, promise]) => promise);
+      await Promise.all(pendingSaves);
+
       await removeIngredients(selectedOwnedIngredientId);
-      
-      const filteredOwnedIngredients = ownedIngredients.filter(_ownedIngredient => {
-        const found = selectedOwnedIngredientId.indexOf(_ownedIngredient.id) >= 0;
-        return !found;
-      });
-      setOwnedIngredients(filteredOwnedIngredients);
+
+      setOwnedIngredients(prev => prev.filter((oi) => !selectedOwnedIngredientId.includes(oi.id)));
       setSelectedOwnedIngredientId([]);
     } catch (error){
       if (error instanceof Error)
@@ -559,7 +566,7 @@ function OwnedIngredientsPane() {
                         step={1}
                         title="Quantity"
                         value={edits[ownedIngredient.id]?.quantity ?? ""}
-                        disabled={savingId === ownedIngredient.id}
+                        disabled={savingIds[ownedIngredient.id]}
                         onChange={(e) =>
                           setEdits(prev => ({
                             ...prev,
@@ -578,7 +585,7 @@ function OwnedIngredientsPane() {
                         type="date"
                         title="Expiry date"
                         value={edits[ownedIngredient.id]?.expires_at ?? ""}
-                        disabled={savingId === ownedIngredient.id}
+                        disabled={savingIds[ownedIngredient.id]}
                         onChange={(e) =>
                           setEdits(prev => ({
                             ...prev,
@@ -592,7 +599,7 @@ function OwnedIngredientsPane() {
                         className="w-[8.5rem] h-7 text-xs text-center bg-bg-card border border-border rounded
                           focus:border-primary focus:outline-none"
                       />
-                      {savingId === ownedIngredient.id && (
+                      {savingIds[ownedIngredient.id] && (
                         <Oval visible height="16" width="16" color="var(--primary)" />
                       )}
                     </div>
@@ -614,8 +621,19 @@ function OwnedIngredientsPane() {
 
   async function handleRemoveIngredient(id: string) {
     try {
-      removeIngredients([id]);
-      setOwnedIngredients(ownedIngredients.filter((oi) => oi.id !== id));
+      // wait for a pending save of this row so the upsert cannot
+      // recreate the user_ingredients row after the delete lands
+      const pending = inFlightSavesRef.current.get(id);
+      if (pending) await pending;
+
+      await removeIngredients([id]);
+
+      setOwnedIngredients(prev => prev.filter((oi) => oi.id !== id));
+      setEdits(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     } catch (error) {
       console.error(error);
       toast.error("Error removing ingredient");
@@ -625,35 +643,47 @@ function OwnedIngredientsPane() {
   async function handleEditCommit(ownedIngredient: OwnedIngredient) {
     const edit = edits[ownedIngredient.id];
     if (!edit) return;
-    if (savingId !== null) return;
+    if (inFlightSavesRef.current.has(ownedIngredient.id)) return;
 
     const originalQuantity = ownedIngredient.quantity != null ? String(ownedIngredient.quantity) : "";
     const originalExpires = ownedIngredient.expires_at ? String(ownedIngredient.expires_at).slice(0, 10) : "";
 
     if (edit.quantity === originalQuantity && edit.expires_at === originalExpires) return;
 
-    try {
-      setSavingId(ownedIngredient.id);
+    const savePromise = (async () => {
+      setSavingIds(prev => ({ ...prev, [ownedIngredient.id]: true }));
+      try {
+        const updated = await saveIngredient([{
+          id: ownedIngredient.ingredient.id,
+          quantity: edit.quantity === "" ? "" : Number(edit.quantity),
+          expires_at: edit.expires_at || "",
+        }]);
 
-      const updated = await saveIngredient([{
-        id: ownedIngredient.ingredient.id,
-        quantity: edit.quantity === "" ? "" : Number(edit.quantity),
-        expires_at: edit.expires_at || "",
-      }]);
+        // merge server rows (keyed by user_ingredients id) against the current
+        // list so a row deleted while this save was pending stays removed
+        setOwnedIngredients(prev => {
+          const updatedById = new Map(updated.map((u) => [u.id, u]));
+          return prev.map((oi) => updatedById.get(oi.id) ?? oi);
+        });
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to update ingredient");
+        // revert the working copy to the last known server values
+        setEdits(prev => ({
+          ...prev,
+          [ownedIngredient.id]: { quantity: originalQuantity, expires_at: originalExpires },
+        }));
+      } finally {
+        setSavingIds(prev => {
+          const next = { ...prev };
+          delete next[ownedIngredient.id];
+          return next;
+        });
+        inFlightSavesRef.current.delete(ownedIngredient.id);
+      }
+    })();
 
-      // merge server rows (keyed by user_ingredients id) back into the list
-      const updatedById = new Map(updated.map((u) => [u.id, u]));
-      setOwnedIngredients(ownedIngredients.map((oi) => updatedById.get(oi.id) ?? oi));
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to update ingredient");
-      // revert the working copy to the last known server values
-      setEdits(prev => ({
-        ...prev,
-        [ownedIngredient.id]: { quantity: originalQuantity, expires_at: originalExpires },
-      }));
-    } finally {
-      setSavingId(null);
-    }
+    // expose the pending save so removing the row can wait for it
+    inFlightSavesRef.current.set(ownedIngredient.id, savePromise);
   }
 }
