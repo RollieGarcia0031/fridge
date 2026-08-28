@@ -72,7 +72,13 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { items, ids } = body;
 
-  let normalizedItems: { id: string; quantity?: number; expires_at?: string }[] = [];
+  let normalizedItems: {
+    id: string;
+    /** present only when the client explicitly set it; "" clears the stored value */
+    quantity?: string;
+    /** present only when the client explicitly set it; "" clears the stored value */
+    expires_at?: string;
+  }[] = [];
 
   if (items && Array.isArray(items)) {
     const rejected = items.find(
@@ -90,11 +96,19 @@ export async function POST(req: Request) {
       );
     }
 
-    normalizedItems = items.map((item: { id: string; quantity?: number | string; expires_at?: string }) => ({
-      id: item.id,
-      quantity: item.quantity != null ? Number(item.quantity) : undefined,
-      expires_at: item.expires_at || undefined,
-    }));
+    normalizedItems = items.map((item: { id: string; quantity?: number | string | null; expires_at?: string | null }) => {
+      const normalized: { id: string; quantity?: string; expires_at?: string } = { id: item.id };
+
+      // absent -> do not touch the stored value; "" -> clear it
+      if (item.quantity !== undefined && item.quantity !== null) {
+        normalized.quantity = item.quantity === "" ? "" : String(item.quantity);
+      }
+      if (item.expires_at !== undefined && item.expires_at !== null) {
+        normalized.expires_at = item.expires_at;
+      }
+
+      return normalized;
+    });
   } else if (ids && Array.isArray(ids)) {
     normalizedItems = ids.map((id: string) => ({ id }));
   } else {
@@ -126,29 +140,27 @@ export async function POST(req: Request) {
   }
 
   // 4. Insert into user_ingredients
-  //    Only include quantity/expires_at when the request explicitly provides them
-  //    so existing values are not overwritten with null for legacy ids-only items.
-  const baseOnlyRows: { user_id: string; ingredient_id: string }[] = [];
-  const extendedRows: {
-    user_id: string;
-    ingredient_id: string;
-    quantity: string;
-    expires_at: string;
-  }[] = [];
+  //    Each item only carries the optional fields the request explicitly
+  //    provided, so updating one field can never overwrite the other.
+  //    Items are grouped by which optional fields they carry; every group is
+  //    upserted separately so untouched columns are preserved on conflict.
+  const rowGroups = new Map<
+    string,
+    Record<string, unknown>[]
+  >();
 
   for (const item of normalizedItems) {
-    const hasOptional =
-      item.quantity != null || (item.expires_at != null && item.expires_at !== "");
-    if (hasOptional) {
-      extendedRows.push({
-        user_id: user.id,
-        ingredient_id: item.id,
-        quantity: item.quantity != null ? String(item.quantity) : "",
-        expires_at: item.expires_at || "",
-      });
-    } else {
-      baseOnlyRows.push({ user_id: user.id, ingredient_id: item.id });
-    }
+    const base: Record<string, unknown> = {
+      user_id: user.id,
+      ingredient_id: item.id,
+    };
+    if (item.quantity !== undefined) base.quantity = item.quantity;
+    if (item.expires_at !== undefined) base.expires_at = item.expires_at || null;
+
+    const shape = `${item.quantity !== undefined ? "q" : ""}${item.expires_at !== undefined ? "e" : ""}`;
+    const group = rowGroups.get(shape) ?? [];
+    group.push(base);
+    rowGroups.set(shape, group);
   }
 
   const upsertOpts = { onConflict: "user_id,ingredient_id" as const };
@@ -166,21 +178,10 @@ export async function POST(req: Request) {
 
   let addedIngredients: unknown[] = [];
 
-  if (baseOnlyRows.length > 0) {
+  for (const rows of rowGroups.values()) {
     const { data, error } = await (await supabase())
       .from("user_ingredients")
-      .upsert(baseOnlyRows, upsertOpts)
-      .select(selectClause);
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    addedIngredients = data ?? [];
-  }
-
-  if (extendedRows.length > 0) {
-    const { data, error } = await (await supabase())
-      .from("user_ingredients")
-      .upsert(extendedRows, upsertOpts)
+      .upsert(rows, upsertOpts)
       .select(selectClause);
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

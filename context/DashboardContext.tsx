@@ -28,7 +28,7 @@ interface DashboardContextProps {
    * list of ingredients owned by logged user
    */
   ownedIngredients: OwnedIngredient[];
-  setOwnedIngredients: (ownedIngredients: OwnedIngredient[]) => void;
+  setOwnedIngredients: Dispatch<SetStateAction<OwnedIngredient[]>>;
 
   /**
    * state for loading the owned ingredients
