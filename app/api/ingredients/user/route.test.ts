@@ -190,4 +190,92 @@ describe("POST /api/ingredients/user", () => {
     expect(secondRows[0].quantity).toBe("5");
     expect(secondRows[0].expires_at).toBe("2027-06-01");
   });
+
+  it("quantity-only update preserves stored expires_at (key omitted from payload)", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: fakeUser }, error: null });
+
+    const ingredientsChain = buildChain([fakeIngredient], null);
+    const upsertChain = buildChain([{ ...fakeOwnedRow, quantity: "3" }], null);
+
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return ingredientsChain;
+      return upsertChain;
+    });
+
+    const res = await makePost({ items: [{ id: "ing-1", quantity: 3 }] });
+    expect(res.status).toBe(201);
+
+    const upsertCall = upsertChain.upsert as ReturnType<typeof vi.fn>;
+    expect(upsertCall).toHaveBeenCalledTimes(1);
+    const rows = upsertCall.mock.calls[0][0] as Record<string, unknown>[];
+    expect(rows[0].quantity).toBe("3");
+    expect(rows[0]).not.toHaveProperty("expires_at");
+  });
+
+  it("expires_at-only update preserves stored quantity (key omitted from payload)", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: fakeUser }, error: null });
+
+    const ingredientsChain = buildChain([fakeIngredient], null);
+    const upsertChain = buildChain([{ ...fakeOwnedRow, expires_at: "2026-10-15" }], null);
+
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return ingredientsChain;
+      return upsertChain;
+    });
+
+    const res = await makePost({ items: [{ id: "ing-1", expires_at: "2026-10-15" }] });
+    expect(res.status).toBe(201);
+
+    const upsertCall = upsertChain.upsert as ReturnType<typeof vi.fn>;
+    expect(upsertCall).toHaveBeenCalledTimes(1);
+    const rows = upsertCall.mock.calls[0][0] as Record<string, unknown>[];
+    expect(rows[0].expires_at).toBe("2026-10-15");
+    expect(rows[0]).not.toHaveProperty("quantity");
+  });
+
+  it("empty expires_at clears the stored date (payload expires_at is null)", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: fakeUser }, error: null });
+
+    const ingredientsChain = buildChain([fakeIngredient], null);
+    const upsertChain = buildChain([{ ...fakeOwnedRow, expires_at: null }], null);
+
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return ingredientsChain;
+      return upsertChain;
+    });
+
+    const res = await makePost({ items: [{ id: "ing-1", expires_at: "" }] });
+    expect(res.status).toBe(201);
+
+    const upsertCall = upsertChain.upsert as ReturnType<typeof vi.fn>;
+    const rows = upsertCall.mock.calls[0][0] as Record<string, unknown>[];
+    expect(rows[0].expires_at).toBeNull();
+  });
+
+  it("empty quantity clears the stored quantity (payload quantity is '')", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: fakeUser }, error: null });
+
+    const ingredientsChain = buildChain([fakeIngredient], null);
+    const upsertChain = buildChain([{ ...fakeOwnedRow, quantity: "" }], null);
+
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return ingredientsChain;
+      return upsertChain;
+    });
+
+    const res = await makePost({ items: [{ id: "ing-1", quantity: "" }] });
+    expect(res.status).toBe(201);
+
+    const upsertCall = upsertChain.upsert as ReturnType<typeof vi.fn>;
+    const rows = upsertCall.mock.calls[0][0] as Record<string, unknown>[];
+    expect(rows[0].quantity).toBe("");
+  });
 });

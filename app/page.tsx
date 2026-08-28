@@ -25,6 +25,7 @@ export interface inputOption {
   label: string;
   value: string;
   quantity?: number;
+  expires_at?: string;
 }
 
 export default function Dashboard() {
@@ -348,6 +349,23 @@ function Home() {
                                   focus:border-primary focus:outline-none [appearance:textfield]
                                   [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
+                              <input
+                                type="date"
+                                title="Expiry date (optional)"
+                                value={ingredient.expires_at ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setIngredientsToAdd(prev =>
+                                    prev.map(i =>
+                                      i.value === ingredient.value
+                                        ? { ...i, expires_at: val === "" ? undefined : val }
+                                        : i
+                                    )
+                                  );
+                                }}
+                                className="w-[8.5rem] h-7 text-xs text-center bg-bg-subtle border border-border rounded
+                                  focus:border-primary focus:outline-none"
+                              />
                               <button
                                 onClick={() => {
                                   setIngredientsToAdd(prev => prev.filter(i => i.value !== ingredient.value));
@@ -385,6 +403,7 @@ function Home() {
       const items: IngredientItem[] = ingredientsToAdd.map((ingredient) => ({
         id: ingredient.value,
         quantity: ingredient.quantity,
+        expires_at: ingredient.expires_at,
       }));
 
       const newOwnedIngredients = await saveIngredient(items);
@@ -414,6 +433,25 @@ function OwnedIngredientsPane() {
     selectedOwnedIngredientId, setSelectedOwnedIngredientId,
     isDeletingOwnedIngredients, setIsDeletingOwnedIngredients
   } = useDashboardContext()!;
+
+  // working copy of quantity / expiry per owned ingredient, committed on blur
+  const [edits, setEdits] = useState<Record<string, { quantity: string; expires_at: string }>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEdits(prev => {
+      const next = { ...prev };
+      for (const oi of ownedIngredients) {
+        if (!next[oi.id]) {
+          next[oi.id] = {
+            quantity: oi.quantity != null ? String(oi.quantity) : "",
+            expires_at: oi.expires_at ? String(oi.expires_at).slice(0, 10) : "",
+          };
+        }
+      }
+      return next;
+    });
+  }, [ownedIngredients]);
 
   function handleIngredientCardClick(id: string){
     if (!id) return;
@@ -510,12 +548,54 @@ function OwnedIngredientsPane() {
                   onClick={()=>handleIngredientCardClick(ownedIngredient.id || "")}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="font-medium text-sm">{ownedIngredient.ingredient.name}</span>
-                    {ownedIngredient.quantity != null && ownedIngredient.quantity > 0 && (
-                      <span className="text-[10px] text-text-muted bg-bg-card px-1.5 py-0.5 rounded">
-                        x{ownedIngredient.quantity}
-                      </span>
-                    )}
+                    <span className="font-medium text-sm truncate">{ownedIngredient.ingredient.name}</span>
+                    <div
+                      className="flex items-center gap-1.5 shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        title="Quantity"
+                        value={edits[ownedIngredient.id]?.quantity ?? ""}
+                        disabled={savingId === ownedIngredient.id}
+                        onChange={(e) =>
+                          setEdits(prev => ({
+                            ...prev,
+                            [ownedIngredient.id]: {
+                              quantity: e.target.value,
+                              expires_at: prev[ownedIngredient.id]?.expires_at ?? "",
+                            },
+                          }))
+                        }
+                        onBlur={() => handleEditCommit(ownedIngredient)}
+                        className="w-14 h-7 text-xs text-center bg-bg-card border border-border rounded
+                          focus:border-primary focus:outline-none [appearance:textfield]
+                          [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <input
+                        type="date"
+                        title="Expiry date"
+                        value={edits[ownedIngredient.id]?.expires_at ?? ""}
+                        disabled={savingId === ownedIngredient.id}
+                        onChange={(e) =>
+                          setEdits(prev => ({
+                            ...prev,
+                            [ownedIngredient.id]: {
+                              quantity: prev[ownedIngredient.id]?.quantity ?? "",
+                              expires_at: e.target.value,
+                            },
+                          }))
+                        }
+                        onBlur={() => handleEditCommit(ownedIngredient)}
+                        className="w-[8.5rem] h-7 text-xs text-center bg-bg-card border border-border rounded
+                          focus:border-primary focus:outline-none"
+                      />
+                      {savingId === ownedIngredient.id && (
+                        <Oval visible height="16" width="16" color="var(--primary)" />
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => handleRemoveIngredient(ownedIngredient.id)}
@@ -539,6 +619,41 @@ function OwnedIngredientsPane() {
     } catch (error) {
       console.error(error);
       toast.error("Error removing ingredient");
+    }
+  }
+
+  async function handleEditCommit(ownedIngredient: OwnedIngredient) {
+    const edit = edits[ownedIngredient.id];
+    if (!edit) return;
+    if (savingId !== null) return;
+
+    const originalQuantity = ownedIngredient.quantity != null ? String(ownedIngredient.quantity) : "";
+    const originalExpires = ownedIngredient.expires_at ? String(ownedIngredient.expires_at).slice(0, 10) : "";
+
+    if (edit.quantity === originalQuantity && edit.expires_at === originalExpires) return;
+
+    try {
+      setSavingId(ownedIngredient.id);
+
+      const updated = await saveIngredient([{
+        id: ownedIngredient.ingredient.id,
+        quantity: edit.quantity === "" ? "" : Number(edit.quantity),
+        expires_at: edit.expires_at || "",
+      }]);
+
+      // merge server rows (keyed by user_ingredients id) back into the list
+      const updatedById = new Map(updated.map((u) => [u.id, u]));
+      setOwnedIngredients(ownedIngredients.map((oi) => updatedById.get(oi.id) ?? oi));
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update ingredient");
+      // revert the working copy to the last known server values
+      setEdits(prev => ({
+        ...prev,
+        [ownedIngredient.id]: { quantity: originalQuantity, expires_at: originalExpires },
+      }));
+    } finally {
+      setSavingId(null);
     }
   }
 }

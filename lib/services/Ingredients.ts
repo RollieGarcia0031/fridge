@@ -2,7 +2,8 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 
 export interface IngredientItem {
   id: string;
-  quantity?: number;
+  /** quantity as a number, or "" to clear the stored value */
+  quantity?: number | "";
   expires_at?: string;
 }
 
