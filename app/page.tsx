@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
+import { IoFlash } from "react-icons/io5";
 import SuggestedDialog from "@/components/SuggestedDialog";
 import { Oval, TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +39,8 @@ export default function Dashboard() {
 }
 
 function Home() {
+  const router = useRouter();
+
   const {
     ingredients,
     selectedIngredientId,
@@ -44,6 +48,8 @@ function Home() {
     suggestionDialogRef,
     suggestedRecipes,
     refreshRecommendedRecipes,
+    generateRecipeNow,
+    isGeneratingNow,
     fetchOwnedIngredients,
     RefreshIngredientList,
     ownedIngredients,
@@ -245,6 +251,19 @@ function Home() {
                     </button>
 
                     <button
+                      onClick={() => handleInstantGenerate()}
+                      disabled={isGeneratingNow}
+                      title="Generate now (go straight to a dish)"
+                      className="btn btn-secondary p-3 aspect-square"
+                    >
+                      {isGeneratingNow ? (
+                        <Oval visible height="20" width="20" color="var(--primary)" />
+                      ) : (
+                        <IoFlash className="text-2xl text-primary" />
+                      )}
+                    </button>
+
+                    <button
                       onClick={() => openSuggestedIngredients()}
                       className="btn btn-secondary p-3 aspect-square"
                       title="Generate Recipes"
@@ -423,6 +442,13 @@ function Home() {
     if (suggestedRecipes.length === 0) {
       refreshRecommendedRecipes();
     }
+  }
+
+  async function handleInstantGenerate() {
+    const recipe = await generateRecipeNow();
+    if (!recipe) return;
+    sessionStorage.setItem("recipe", JSON.stringify(recipe));
+    router.push("/recipe");
   }
 }
 
