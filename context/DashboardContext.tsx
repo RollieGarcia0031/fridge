@@ -83,6 +83,18 @@ interface DashboardContextProps {
   refreshRecommendedRecipes: () => Promise<void>;
 
   /**
+   * instantly generate a single recipe suggestion (respecting active filters)
+   * and return it so the caller can hand it off to the /recipe page
+   */
+  generateRecipeNow: () => Promise<Recipe | null>;
+
+  /**
+   * state for loading while instantly generating a recipe
+   */
+  isGeneratingNow: boolean;
+  setIsGeneratingNow: (isGeneratingNow: boolean) => void;
+
+  /**
    * fetch the owned ingredients by the user
    */
   fetchOwnedIngredients: () => Promise<void>;
@@ -161,6 +173,10 @@ export function DashboardProvider({children}:{
   // id of the most recent suggestion request; older requests are stale
   const latestRequestIdRef = useRef(0);
 
+  // id of the most recent instant-generation request; independent of the
+  // dialog suggestion requests so the two cannot cancel each other
+  const latestInstantRequestIdRef = useRef(0);
+
   /**
    * update the dish type filter and invalidate any in-flight suggestion request
    */
@@ -211,10 +227,13 @@ export function DashboardProvider({children}:{
    */
   function invalidateInFlightSuggestions(){
     latestRequestIdRef.current++;
+    latestInstantRequestIdRef.current++;
 
-    // no replacement request is running yet; stop the spinner here so a
-    // discarded response cannot leave the dialog "thinking" forever
+    // no replacement request is running yet; stop the spinners here so a
+    // discarded response cannot leave the dialog / instant generation
+    // "thinking" forever
     setIsLoadingResponse(false);
+    setIsGeneratingNow(false);
   }
 
   // state for loading while adding an ingredient
@@ -269,6 +288,51 @@ export function DashboardProvider({children}:{
     }
   } 
 
+  // state for loading while instantly generating a single recipe
+  const [isGeneratingNow, setIsGeneratingNow] = useState(false);
+
+  /**
+   * instantly generate a single recipe suggestion, respecting the active
+   * filters, and return the first result (or null) for the caller to hand
+   * off to the /recipe page. Does not mutate the suggestion list.
+   */
+  async function generateRecipeNow(): Promise<Recipe | null> {
+    const requestId = ++latestInstantRequestIdRef.current;
+
+    try {
+      setIsGeneratingNow(true);
+
+      const requestedDishType = dishTypeRef.current;
+      const requestedPriority = nutrientPriorityRef.current;
+      const requestedAllowSuggested = allowSuggestedIngredientsRef.current;
+
+      const filters: MealFilters = {};
+      if (requestedDishType) filters.type = requestedDishType;
+      if (requestedPriority) filters.nutrientPriority = requestedPriority;
+      if (requestedAllowSuggested) filters.allowSuggestedIngredients = true;
+      const hasFilters = Boolean(requestedDishType || requestedPriority || requestedAllowSuggested);
+
+      const data = await getRecommendedMeals(hasFilters ? filters : undefined);
+
+      // a newer instant-generation request is in flight; let it own the result
+      if (requestId !== latestInstantRequestIdRef.current) return null;
+      // a filter changed while this request was pending; discard the stale result
+      if (requestedDishType !== dishTypeRef.current) return null;
+      if (requestedPriority !== nutrientPriorityRef.current) return null;
+      if (requestedAllowSuggested !== allowSuggestedIngredientsRef.current) return null;
+
+      return data?.[0] ?? null;
+    } catch (error) {
+      console.error(error);
+      return null;
+    } finally {
+      // keep the spinner running while a newer instant-generation request
+      // is still pending; a filter-change invalidation clears it separately
+      if (requestId === latestInstantRequestIdRef.current)
+        setIsGeneratingNow(false);
+    }
+  }
+
   /**
    * fetch the owned ingredients of logged user
    */
@@ -317,6 +381,9 @@ export function DashboardProvider({children}:{
       allowSuggestedIngredients,
       setAllowSuggestedIngredients: updateAllowSuggestedIngredients,
       refreshRecommendedRecipes,
+      generateRecipeNow,
+      isGeneratingNow,
+      setIsGeneratingNow,
       fetchOwnedIngredients,
       RefreshIngredientList,
       isLoadingAddIngredient,
