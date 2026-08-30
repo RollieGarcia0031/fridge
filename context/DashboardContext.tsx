@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, Dispatch, SetStateAction } from "react";
+import { createContext, useContext, useState, useRef, useEffect, Dispatch, SetStateAction } from "react";
 import { inputOption } from '@/app/page';
 import {
   getOwnedIngredients,
@@ -76,6 +76,13 @@ interface DashboardContextProps {
    */
   allowSuggestedIngredients: boolean;
   setAllowSuggestedIngredients: (allowSuggestedIngredients: boolean) => void;
+
+  /**
+   * market mode: when enabled, suggestions regenerate live (debounced) as the
+   * user queues ingredients, considering the queued items alongside inventory
+   */
+  marketMode: boolean;
+  setMarketMode: (marketMode: boolean) => void;
 
   /**
    * refresh the content of suggestion dialog
@@ -170,6 +177,22 @@ export function DashboardProvider({children}:{
   // mirrors allowSuggestedIngredients so in-flight suggestion requests can detect filter changes
   const allowSuggestedIngredientsRef = useRef<boolean>(false);
 
+  // whether market mode (live suggestions while queueing) is enabled
+  const [marketMode, setMarketMode] = useState(false);
+
+  // mirrors marketMode so in-flight suggestion requests can detect toggles
+  const marketModeRef = useRef<boolean>(false);
+
+  // previous marketMode value so the effect can fire immediately on enable
+  const wasMarketModeRef = useRef(false);
+
+  // mirrors the queued ingredient ids so in-flight requests can detect queue changes
+  const queuedIdsRef = useRef<string[]>([]);
+
+  // stable handle to refreshRecommendedRecipes for the debounced market-mode effect
+  const refreshRecommendedRecipesRef = useRef<() => Promise<void>>(refreshRecommendedRecipes);
+  refreshRecommendedRecipesRef.current = refreshRecommendedRecipes;
+
   // id of the most recent suggestion request; older requests are stale
   const latestRequestIdRef = useRef(0);
 
@@ -223,6 +246,21 @@ export function DashboardProvider({children}:{
   }
 
   /**
+   * toggle market mode and invalidate any in-flight suggestion request
+   */
+  function updateMarketMode(value: boolean){
+    if (value === marketModeRef.current){
+      setMarketMode(value);
+      return;
+    }
+
+    marketModeRef.current = value;
+    setMarketMode(value);
+
+    invalidateInFlightSuggestions();
+  }
+
+  /**
    * invalidate any in-flight suggestion request for the old filters
    */
   function invalidateInFlightSuggestions(){
@@ -262,12 +300,22 @@ export function DashboardProvider({children}:{
       const requestedDishType = dishTypeRef.current;
       const requestedPriority = nutrientPriorityRef.current;
       const requestedAllowSuggested = allowSuggestedIngredientsRef.current;
+      // in market mode the queued items count as prospective inventory
+      const requestedQueuedIds = marketModeRef.current
+        ? [...queuedIdsRef.current]
+        : [];
 
       const filters: MealFilters = {};
       if (requestedDishType) filters.type = requestedDishType;
       if (requestedPriority) filters.nutrientPriority = requestedPriority;
       if (requestedAllowSuggested) filters.allowSuggestedIngredients = true;
-      const hasFilters = Boolean(requestedDishType || requestedPriority || requestedAllowSuggested);
+      if (requestedQueuedIds.length > 0) filters.ingredientIds = requestedQueuedIds;
+      const hasFilters = Boolean(
+        requestedDishType ||
+        requestedPriority ||
+        requestedAllowSuggested ||
+        requestedQueuedIds.length > 0
+      );
 
       const data = await getRecommendedMeals(hasFilters ? filters : undefined);
 
@@ -277,6 +325,11 @@ export function DashboardProvider({children}:{
       if (requestedDishType !== dishTypeRef.current) return;
       if (requestedPriority !== nutrientPriorityRef.current) return;
       if (requestedAllowSuggested !== allowSuggestedIngredientsRef.current) return;
+      // the market-mode queue changed while this request was pending
+      if (
+        marketModeRef.current &&
+        JSON.stringify(requestedQueuedIds) !== JSON.stringify(queuedIdsRef.current)
+      ) return;
 
       setSuggestedRecipes(data!);
     } catch (error) {
@@ -305,12 +358,22 @@ export function DashboardProvider({children}:{
       const requestedDishType = dishTypeRef.current;
       const requestedPriority = nutrientPriorityRef.current;
       const requestedAllowSuggested = allowSuggestedIngredientsRef.current;
+      // in market mode the queued items count as prospective inventory
+      const requestedQueuedIds = marketModeRef.current
+        ? [...queuedIdsRef.current]
+        : [];
 
       const filters: MealFilters = {};
       if (requestedDishType) filters.type = requestedDishType;
       if (requestedPriority) filters.nutrientPriority = requestedPriority;
       if (requestedAllowSuggested) filters.allowSuggestedIngredients = true;
-      const hasFilters = Boolean(requestedDishType || requestedPriority || requestedAllowSuggested);
+      if (requestedQueuedIds.length > 0) filters.ingredientIds = requestedQueuedIds;
+      const hasFilters = Boolean(
+        requestedDishType ||
+        requestedPriority ||
+        requestedAllowSuggested ||
+        requestedQueuedIds.length > 0
+      );
 
       const data = await getRecommendedMeals(hasFilters ? filters : undefined);
 
@@ -320,6 +383,11 @@ export function DashboardProvider({children}:{
       if (requestedDishType !== dishTypeRef.current) return null;
       if (requestedPriority !== nutrientPriorityRef.current) return null;
       if (requestedAllowSuggested !== allowSuggestedIngredientsRef.current) return null;
+      // the market-mode queue changed while this request was pending
+      if (
+        marketModeRef.current &&
+        JSON.stringify(requestedQueuedIds) !== JSON.stringify(queuedIdsRef.current)
+      ) return null;
 
       return data?.[0] ?? null;
     } catch (error) {
@@ -332,6 +400,22 @@ export function DashboardProvider({children}:{
         setIsGeneratingNow(false);
     }
   }
+
+  /**
+   * market mode: regenerate suggestions live as the queue changes
+   * (immediately on enable; ~500ms after each subsequent queue change)
+   */
+  useEffect(() => {
+    const justEnabled = marketMode && !wasMarketModeRef.current;
+    wasMarketModeRef.current = marketMode;
+
+    if (!marketMode) return;
+
+    queuedIdsRef.current = ingredientsToAdd.map((ingredient) => ingredient.value);
+
+    const timer = setTimeout(() => refreshRecommendedRecipesRef.current(), justEnabled ? 0 : 500);
+    return () => clearTimeout(timer);
+  }, [marketMode, ingredientsToAdd, dishType, nutrientPriority, allowSuggestedIngredients]);
 
   /**
    * fetch the owned ingredients of logged user
@@ -380,6 +464,8 @@ export function DashboardProvider({children}:{
       setNutrientPriority: updateNutrientPriority,
       allowSuggestedIngredients,
       setAllowSuggestedIngredients: updateAllowSuggestedIngredients,
+      marketMode,
+      setMarketMode: updateMarketMode,
       refreshRecommendedRecipes,
       generateRecipeNow,
       isGeneratingNow,

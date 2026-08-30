@@ -21,6 +21,11 @@ export interface MealFilters {
    * when true the AI may include ingredients beyond the user's inventory
    */
   allowSuggestedIngredients?: boolean;
+  /**
+   * ingredient ids to consider alongside the user's owned inventory
+   * (e.g. items queued in market mode but not yet saved to the fridge)
+   */
+  ingredientIds?: string[];
 }
 
 export async function getRecommendedMeals(
