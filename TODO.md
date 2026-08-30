@@ -34,16 +34,16 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] Optional: add an explicit mode switch UI (Fridge / Market) to satisfy the plan wording. If added, fridge mode = existing behavior.
 
 ### 7. Market mode (AI real-time suggestions while adding to cart)
-- [ ] New behavior: as the user adds ingredients to the queue, the app should suggest dishes in real time (debounced ~500ms after each addition).
-- [ ] Implement: reuse `refreshRecommendedRecipes` (or `generateRecipeFlow`) but auto-fire when `ingredientsToAdd` changes while in market mode. Debounce in the component or context.
-- [ ] UI: a toggle to enable market mode; a live suggestion panel (can reuse `SuggestedDialog` content or an inline list) updating on each queued item.
+- [X] New behavior: as the user adds ingredients to the queue, the app should suggest dishes in real time (debounced ~500ms after each addition).
+- [X] Implement: reuse `refreshRecommendedRecipes` (or `generateRecipeFlow`) but auto-fire when `ingredientsToAdd` changes while in market mode. Debounce in the component or context.
+- [X] UI: a toggle to enable market mode; a live suggestion panel (can reuse `SuggestedDialog` content or an inline list) updating on each queued item.
 
 ## Dish generation (plan: main feature)
 
 ### 8. Instant generation (one-click straight to a dish)
-- [ ] Add a "Generate now" button that calls the meal-ideas flow and immediately navigates to `/recipe` with the first result (or picks a random one).
-- [ ] Reuse `sessionStorage` handoff already used by `components/SuggestedDialog.tsx` → `/recipe`.
-- [ ] Note: full recipe (`getFullRecipeFlow`) is only generated on the `/recipe` page; instant generation should just push a chosen suggestion through the same path.
+- [X] Add a "Generate now" button that calls the meal-ideas flow and immediately navigates to `/recipe` with the first result (or picks a random one).
+- [X] Reuse `sessionStorage` handoff already used by `components/SuggestedDialog.tsx` → `/recipe`.
+- [X] Note: full recipe (`getFullRecipeFlow`) is only generated on the `/recipe` page; instant generation should just push a chosen suggestion through the same path.
 
 ### 9. Show list of suggestions
 - [x] `SuggestedDialog.tsx` + `refreshRecommendedRecipes()` cover this. No change required (but see #1–#3 for filter support).

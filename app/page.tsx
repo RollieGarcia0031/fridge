@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
 import { IoFlash } from "react-icons/io5";
-import SuggestedDialog from "@/components/SuggestedDialog";
+import SuggestedDialog, { RecipeCard } from "@/components/SuggestedDialog";
 import { Oval, TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -66,6 +66,9 @@ function Home() {
     setNutrientPriority,
     allowSuggestedIngredients,
     setAllowSuggestedIngredients,
+    marketMode,
+    setMarketMode,
+    isLoadingResponse,
     setSuggestedRecipes
   } = useDashboardContext()!;
 
@@ -190,6 +193,14 @@ function Home() {
     // drop stale suggestions so the dialog regenerates with the new flag
     setSuggestedRecipes([]);
     setAllowSuggestedIngredients(checked);
+  };
+
+  const handleMarketModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+
+    // drop stale suggestions so the live panel regenerates from the queue
+    setSuggestedRecipes([]);
+    setMarketMode(checked);
   };
 
   const selectedIngredient = ingredients.find(
@@ -326,6 +337,21 @@ function Home() {
                       Let AI suggest extra ingredients beyond my fridge
                     </label>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="marketModeToggle"
+                      type="checkbox"
+                      checked={marketMode}
+                      onChange={handleMarketModeChange}
+                      className="w-4 h-4 shrink-0 accent-primary cursor-pointer"
+                    />
+                    <label
+                      htmlFor="marketModeToggle"
+                      className="text-sm text-text-muted cursor-pointer select-none"
+                    >
+                      Market mode (suggest dishes live as I queue ingredients)
+                    </label>
+                  </div>
                   {ingredientsToAdd.length > 0 && (
                     <div className="space-y-3 pt-4 border-t border-border/50">
                       <div className="flex items-center justify-between">
@@ -408,6 +434,61 @@ function Home() {
               <OwnedIngredientsPane />
             </div>
           </div>
+
+          {/* Live market-mode suggestions */}
+          {marketMode && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="card p-6 bg-bg-card border-white/10"
+            >
+              <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+                <div className="space-y-1">
+                  <h3 className="flex items-center gap-3">
+                    <span className="w-1.5 h-6 bg-accent rounded-full animate-pulse" />
+                    Market Suggestions
+                    <span className="text-[10px] font-bold uppercase tracking-widest bg-accent/15 text-accent px-2 py-0.5 rounded-full">
+                      Live
+                    </span>
+                  </h3>
+                  <p className="text-text-muted text-sm">
+                    {ingredientsToAdd.length > 0
+                      ? `Suggestions based on your fridge + ${ingredientsToAdd.length} queued item${ingredientsToAdd.length > 1 ? "s" : ""} — updates as you add more.`
+                      : "Add ingredients above and dish ideas will appear as you shop."}
+                  </p>
+                </div>
+                {isLoadingResponse && (
+                  <div className="flex items-center gap-2 text-sm text-text-muted">
+                    <TailSpin height="16" width="16" color="var(--primary)" />
+                    <span className="animate-pulse font-medium">Thinking...</span>
+                  </div>
+                )}
+              </div>
+
+              {isLoadingResponse && suggestedRecipes.length === 0 ? (
+                <div className="flex items-center justify-center gap-3 py-10 opacity-70">
+                  <Oval visible height="32" width="32" color="var(--primary)" />
+                  <p className="font-medium animate-pulse">
+                    Consulting the digital chef...
+                  </p>
+                </div>
+              ) : suggestedRecipes.length > 0 ? (
+                <div className="grid gap-3">
+                  {suggestedRecipes.map((recipe, index) => (
+                    <RecipeCard key={index} recipe={recipe} delay={index * 0.05} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 opacity-50 space-y-2">
+                  <p className="text-3xl">🛒</p>
+                  <p className="font-bold">No suggestions yet</p>
+                  <p className="text-sm">
+                    Queue some ingredients in market mode to get live ideas.
+                  </p>
+                </div>
+              )}
+            </motion.section>
+          )}
         </motion.div>
       </main>
 

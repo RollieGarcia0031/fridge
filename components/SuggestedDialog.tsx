@@ -129,7 +129,7 @@ export default function SuggestedDialog() {
   );
 }
 
-function RecipeCard({ recipe, delay }: { recipe: any; delay: number }) {
+export function RecipeCard({ recipe, delay }: { recipe: any; delay: number }) {
   const router = useRouter();
 
   const openRecipe = () => {
