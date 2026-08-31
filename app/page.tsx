@@ -195,12 +195,13 @@ function Home() {
     setAllowSuggestedIngredients(checked);
   };
 
-  const handleMarketModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = event.target.checked;
+  const handleModeChange = (mode: "fridge" | "market") => {
+    const next = mode === "market";
+    if (next === marketMode) return;
 
     // drop stale suggestions so the live panel regenerates from the queue
     setSuggestedRecipes([]);
-    setMarketMode(checked);
+    setMarketMode(next);
   };
 
   const selectedIngredient = ingredients.find(
@@ -257,7 +258,7 @@ function Home() {
                       {isLoadingAddIngredient ? (
                         <Oval visible height="20" width="20" color="currentColor" />
                       ) : (
-                        "Add to Fridge"
+                        "Save to Fridge"
                       )}
                     </button>
 
@@ -337,20 +338,41 @@ function Home() {
                       Let AI suggest extra ingredients beyond my fridge
                     </label>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      id="marketModeToggle"
-                      type="checkbox"
-                      checked={marketMode}
-                      onChange={handleMarketModeChange}
-                      className="w-4 h-4 shrink-0 accent-primary cursor-pointer"
-                    />
-                    <label
-                      htmlFor="marketModeToggle"
-                      className="text-sm text-text-muted cursor-pointer select-none"
-                    >
-                      Market mode (suggest dishes live as I queue ingredients)
-                    </label>
+                  <div role="group" className="space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                      Mode
+                    </span>
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-bg-subtle border border-border rounded-lg">
+                      <button
+                        type="button"
+                        aria-pressed={!marketMode}
+                        onClick={() => handleModeChange("fridge")}
+                        className={`h-9 rounded-md text-sm font-semibold transition-colors cursor-pointer ${
+                          !marketMode
+                            ? "bg-primary text-white shadow"
+                            : "text-text-muted hover:text-text"
+                        }`}
+                      >
+                        Fridge
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={marketMode}
+                        onClick={() => handleModeChange("market")}
+                        className={`h-9 rounded-md text-sm font-semibold transition-colors cursor-pointer ${
+                          marketMode
+                            ? "bg-primary text-white shadow"
+                            : "text-text-muted hover:text-text"
+                        }`}
+                      >
+                        Market
+                      </button>
+                    </div>
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {marketMode
+                        ? "Live dish ideas as you queue ingredients — add to cart, save when done."
+                        : "Batch-add multiple ingredients to your fridge, then save them together."}
+                    </p>
                   </div>
                   {ingredientsToAdd.length > 0 && (
                     <div className="space-y-3 pt-4 border-t border-border/50">

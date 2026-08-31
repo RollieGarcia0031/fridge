@@ -31,7 +31,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 
 ### 6. Fridge mode (bulk input, multiple foods at once)
 - [x] Current: queue-and-batch-save ("Selected to Add" chips → "Add to Fridge") already allows multi-input. The plan asks for a dedicated "mode" toggle; current UX is effectively fridge mode by default.
-- [ ] Optional: add an explicit mode switch UI (Fridge / Market) to satisfy the plan wording. If added, fridge mode = existing behavior.
+- [x] Optional: add an explicit mode switch UI (Fridge / Market) to satisfy the plan wording. If added, fridge mode = existing behavior.
 
 ### 7. Market mode (AI real-time suggestions while adding to cart)
 - [X] New behavior: as the user adds ingredients to the queue, the app should suggest dishes in real time (debounced ~500ms after each addition).
@@ -117,7 +117,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [x] 3. Allow suggested ingredients flag
 - [x] 4. Autocomplete typing
 - [x] 5. Indicate if ingredient is already taken
-- [x] 6. Fridge mode (partial)
+- [x] 6. Fridge mode
 - [ ] 7. Market mode
 - [ ] 8. Instant generation
 - [x] 9. Show list of suggestions
