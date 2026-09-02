@@ -83,10 +83,10 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 ## Additional features (discovered during analysis)
 
 ### 15. Recipe saving / favorites
-- [ ] Add ability to save generated recipes to user's collection for later access.
-- [ ] New DB table `public.saved_recipes` with RLS.
-- [ ] API routes for save/unlist/get saved recipes.
-- [ ] UI in recipe page to save/unsave; a saved recipes section in dashboard.
+- [x] Add ability to save generated recipes to user's collection for later access.
+- [x] New DB table `public.saved_recipes` with RLS.
+- [x] API routes for save/unlist/get saved recipes.
+- [x] UI in recipe page to save/unsave; a saved recipes section in dashboard.
 
 ### 16. Dietary restrictions / preferences
 - [ ] Add user preferences for dietary restrictions (vegetarian, vegan, gluten-free, etc.).
@@ -126,7 +126,7 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [ ] 12. Presets of fridge inventory
 - [x] 13. Recipe page missing fields from AI output
 - [x] 14. Quantity support in POST /api/ingredients/user
-- [ ] 15. Recipe saving / favorites
+- [x] 15. Recipe saving / favorites
 - [ ] 16. Dietary restrictions / preferences
 - [ ] 17. Meal planning calendar
 - [ ] 18. Shopping list generation

@@ -16,8 +16,11 @@ import {
 } from "@/context/DashboardContext";
 import Select, { SingleValue, components as selectComponents } from "react-select";
 import { saveIngredient, removeIngredients, IngredientItem } from "@/lib/services/Ingredients";
+import { getSavedRecipes, unlistRecipes } from "@/lib/services/Recipes";
 import { toast } from "react-toastify";
 import { MdDeleteOutline } from "react-icons/md";
+import { RxBookmark, RxBookmarkFilled } from "react-icons/rx";
+import { IoArrowForwardCircleOutline } from "react-icons/io5";
 
 interface ingredientOption extends inputOption {
   status?: "owned" | "queued";
@@ -452,8 +455,9 @@ function Home() {
             </div>
 
             {/* Ingredients List */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-3 space-y-6">
               <OwnedIngredientsPane />
+              <SavedRecipesPane />
             </div>
           </div>
 
@@ -550,6 +554,9 @@ function Home() {
   async function handleInstantGenerate() {
     const recipe = await generateRecipeNow();
     if (!recipe) return;
+    // clear persisted instructions from a previously opened saved recipe
+    // so the instant generation does not reuse them
+    sessionStorage.removeItem("instructions");
     sessionStorage.setItem("recipe", JSON.stringify(recipe));
     router.push("/recipe");
   }
@@ -815,4 +822,143 @@ function OwnedIngredientsPane() {
     // expose the pending save so removing the row can wait for it
     inFlightSavesRef.current.set(ownedIngredient.id, savePromise);
   }
+}
+
+function SavedRecipesPane() {
+  const router = useRouter();
+
+  const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
+  const [isLoadingSaved, setIsLoadingSaved] = useState(false);
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setIsLoadingSaved(true);
+        const data = await getSavedRecipes();
+        setSavedRecipes(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoadingSaved(false);
+      }
+    })();
+  }, []);
+
+  function openSavedRecipe(saved: SavedRecipe) {
+    sessionStorage.setItem(
+      "recipe",
+      JSON.stringify({
+        recipe_name: saved.recipe_name,
+        description: saved.description,
+        ingredients: saved.ingredients,
+      }),
+    );
+
+    // persist the stored instructions so the recipe page opens instantly
+    if (saved.instructions !== null) {
+      sessionStorage.setItem("instructions", JSON.stringify(saved.instructions));
+    } else {
+      sessionStorage.removeItem("instructions");
+    }
+
+    router.push("/recipe");
+  }
+
+  async function handleUnlist(id: string) {
+    if (deletingIds.includes(id)) return;
+    try {
+      setDeletingIds((prev) => [...prev, id]);
+      await unlistRecipes([id]);
+      setSavedRecipes((prev) => prev.filter((saved) => saved.id !== id));
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to remove recipe");
+    } finally {
+      setDeletingIds((prev) => prev.filter((selectedId) => selectedId !== id));
+    }
+  }
+
+  return (
+    <div className="card p-6 flex flex-col h-[320px]">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-accent rounded-full" />
+          Saved Recipes
+        </h3>
+        <span className="text-xs font-bold uppercase tracking-wider text-text-muted px-2 py-1 bg-border rounded-md">
+          {savedRecipes.length} Saved
+        </span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto pr-2">
+        {isLoadingSaved ? (
+          <div className="h-full flex items-center justify-center">
+            <TailSpin height="40" width="40" color="var(--primary)" />
+          </div>
+        ) : savedRecipes.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center opacity-50 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-bg-subtle flex items-center justify-center text-2xl">
+              🔖
+            </div>
+            <p>No saved recipes yet.<br />Bookmark a dish you love!</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <AnimatePresence>
+              {savedRecipes.map((saved) => (
+                <motion.div
+                  layout
+                  key={saved.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                  className="flex items-center gap-3 p-3 bg-bg-subtle border border-border rounded-lg hover:border-accent/50 transition-colors"
+                >
+                  <div
+                    className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                    onClick={() => openSavedRecipe(saved)}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-lg shrink-0">
+                      🥗
+                    </div>
+                    <div className="min-w-0 space-y-0.5 flex-1">
+                      <h4 className="font-semibold text-sm truncate">
+                        {saved.recipe_name}
+                      </h4>
+                      <p className="text-xs text-text-muted truncate">
+                        {saved.ingredients.length} ingredient
+                        {saved.ingredients.length !== 1 ? "s" : ""}
+                        {saved.instructions !== null ? " · ready to view" : ""}
+                      </p>
+                    </div>
+                    <IoArrowForwardCircleOutline className="text-xl text-text-muted shrink-0" />
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    {saved.instructions !== null ? (
+                      <RxBookmarkFilled className="text-accent" title="Saved with full recipe" />
+                    ) : (
+                      <RxBookmark className="text-text-muted" title="Saved summary" />
+                    )}
+                    <button
+                      onClick={() => handleUnlist(saved.id)}
+                      disabled={deletingIds.includes(saved.id)}
+                      className="p-1 transition-colors text-text-muted hover:text-red-500 disabled:opacity-50"
+                    >
+                      {deletingIds.includes(saved.id) ? (
+                        <Oval visible height="16" width="16" color="var(--primary)" />
+                      ) : (
+                        <IoIosCloseCircleOutline className="text-xl" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
