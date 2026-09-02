@@ -5,8 +5,15 @@ import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { Oval, TailSpin } from "react-loader-spinner";
 import { IoArrowBackOutline, IoTimeOutline, IoPeopleOutline, IoBulbOutline, IoWarningOutline, IoLogoYoutube } from "react-icons/io5";
+import { RxBookmark, RxBookmarkFilled } from "react-icons/rx";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import {
+  getSavedRecipes,
+  saveRecipe,
+  unlistRecipes,
+} from "@/lib/services/Recipes";
+import { toast } from "react-toastify";
 
 export default function Recipe() {
   const router = useRouter();
@@ -14,6 +21,10 @@ export default function Recipe() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [instructions, setInstructions] = useState<Instructions | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // recipes the user has saved for later
+  const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
+  const [isSavingSaved, setIsSavingSaved] = useState(false);
 
   async function refreshInstructions() {
     try {
@@ -32,16 +43,73 @@ export default function Recipe() {
     const sessionRecipe = sessionStorage.getItem("recipe");
     const parsedRecipe = sessionRecipe ? JSON.parse(sessionRecipe) : null;
     setRecipe(parsedRecipe);
+
+    // a saved recipe may carry the full AI output so it opens instantly;
+    // otherwise it is a fresh suggestion and must be generated below
+    const sessionInstructions = sessionStorage.getItem("instructions");
+    if (parsedRecipe && sessionInstructions) {
+      try {
+        setInstructions(JSON.parse(sessionInstructions));
+      } catch {
+        setInstructions(null);
+      }
+    }
+
     if (!parsedRecipe) {
       router.push("/");
     }
   }, []);
 
   useEffect(() => {
-    if (recipe && !loading) {
+    getSavedRecipes()
+      .then(setSavedRecipes)
+      .catch((error) => console.error(error));
+  }, []);
+
+  useEffect(() => {
+    if (recipe && !loading && !instructions) {
       refreshInstructions();
     }
   }, [recipe]);
+
+  // the recipe is "saved" when its summary name appears in the user's collection
+  const isSaved =
+    recipe != null &&
+    savedRecipes.some((saved) => saved.recipe_name === recipe.recipe_name);
+
+  async function handleToggleSave() {
+    if (recipe === null || instructions === null) return;
+    try {
+      setIsSavingSaved(true);
+
+      if (isSaved) {
+        const saved = savedRecipes.find(
+          (saved) => saved.recipe_name === recipe.recipe_name,
+        );
+        if (saved) {
+          await unlistRecipes([saved.id]);
+        }
+        setSavedRecipes((prev) =>
+          prev.filter((saved) => saved.recipe_name !== recipe.recipe_name),
+        );
+        toast.success("Recipe removed from your collection");
+      } else {
+        const saved = await saveRecipe({
+          recipe_name: recipe.recipe_name,
+          description: recipe.description,
+          ingredients: recipe.ingredients,
+          instructions,
+        });
+        setSavedRecipes((prev) => [saved, ...prev]);
+        toast.success("Recipe saved to your collection");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update saved recipes");
+    } finally {
+      setIsSavingSaved(false);
+    }
+  }
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 md:py-16 w-full">
@@ -79,7 +147,12 @@ export default function Recipe() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full"
           >
-            <InstructionPanel instructions={instructions} />
+            <InstructionPanel
+              instructions={instructions}
+              isSaved={isSaved}
+              isSavingSaved={isSavingSaved}
+              onToggleSave={handleToggleSave}
+            />
           </motion.div>
         )}
       </div>
@@ -87,7 +160,17 @@ export default function Recipe() {
   );
 }
 
-function InstructionPanel({ instructions }: { instructions: Instructions }) {
+function InstructionPanel({
+  instructions,
+  isSaved,
+  isSavingSaved,
+  onToggleSave,
+}: {
+  instructions: Instructions;
+  isSaved: boolean;
+  isSavingSaved: boolean;
+  onToggleSave: () => void;
+}) {
   return (
     <div className="card bg-bg-card p-0 overflow-hidden shadow-2xl border-white/5">
       {/* Hero Header */}
@@ -238,7 +321,21 @@ function InstructionPanel({ instructions }: { instructions: Instructions }) {
         )}
 
         {/* Footer actions */}
-        <div className="pt-8 border-t border-border flex justify-center">
+        <div className="pt-8 border-t border-border flex justify-center gap-3">
+            <button
+                onClick={onToggleSave}
+                disabled={isSavingSaved}
+                className="btn btn-secondary text-sm flex items-center gap-2"
+            >
+                {isSavingSaved ? (
+                    <TailSpin height="16" width="16" color="var(--primary)" />
+                ) : isSaved ? (
+                    <RxBookmarkFilled className="text-primary" />
+                ) : (
+                    <RxBookmark />
+                )}
+                <span>{isSaved ? "Saved" : "Save Recipe"}</span>
+            </button>
             <button 
                 onClick={() => window.print()}
                 className="btn btn-secondary text-sm"

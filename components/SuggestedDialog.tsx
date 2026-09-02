@@ -133,6 +133,9 @@ export function RecipeCard({ recipe, delay }: { recipe: any; delay: number }) {
   const router = useRouter();
 
   const openRecipe = () => {
+    // clear any persisted instructions from a previously opened saved recipe
+    // so a freshly generated suggestion is not shown with someone else's steps
+    sessionStorage.removeItem("instructions");
     sessionStorage.setItem("recipe", JSON.stringify(recipe));
     router.push("/recipe");
   };
