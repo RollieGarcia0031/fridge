@@ -6,6 +6,7 @@ import {
 } from "@/lib/services/Ingredients";
 
 import { getRecommendedMeals, MealFilters } from '@/lib/services/Meal';
+import { getPresets, savePreset, deletePreset } from '@/lib/services/Presets';
 
 /**
  * supported dish type filters for recipe suggestions
@@ -131,6 +132,38 @@ interface DashboardContextProps {
 
   isDeletingOwnedIngredients: boolean;
   setIsDeletingOwnedIngredients: Dispatch<SetStateAction<boolean>>;
+
+  /**
+   * list of saved fridge presets
+   */
+  presets: Preset[];
+  setPresets: Dispatch<SetStateAction<Preset[]>>;
+
+  /**
+   * loading state for fetching presets
+   */
+  isLoadingPresets: boolean;
+  setIsLoadingPresets: (isLoadingPresets: boolean) => void;
+
+  /**
+   * fetch the user's saved presets from the API
+   */
+  fetchPresets: () => Promise<void>;
+
+  /**
+   * save the user's current owned ingredients as a named preset
+   */
+  addPreset: (name: string) => Promise<void>;
+
+  /**
+   * populate ingredientsToAdd with a preset's ingredients
+   */
+  applyPreset: (preset: Preset) => void;
+
+  /**
+   * delete a preset by id
+   */
+  removePreset: (id: string) => Promise<void>;
 }
 
 export const DashboardContext = createContext<DashboardContextProps | undefined>(undefined!);
@@ -285,6 +318,12 @@ export function DashboardProvider({children}:{
 
   // state to check if owned ingredients are currently being deleted
   const [ isDeletingOwnedIngredients, setIsDeletingOwnedIngredients ] = useState(false);
+
+  // list of saved fridge presets
+  const [presets, setPresets] = useState<Preset[]>([]);
+
+  // loading state for fetching presets
+  const [isLoadingPresets, setIsLoadingPresets] = useState(false);
 
 
   /**
@@ -442,6 +481,65 @@ export function DashboardProvider({children}:{
     const data = await getAllIngredients();
     setIngredients(data);
   }
+
+  /**
+   * fetch the user's saved presets
+   */
+  async function fetchPresets(){
+    try {
+      setIsLoadingPresets(true);
+      const data = await getPresets();
+      setPresets(data);
+    } catch (error){
+      console.error(error);
+    } finally {
+      setIsLoadingPresets(false);
+    }
+  }
+
+  /**
+   * save the user's current owned ingredients as a named preset
+   */
+  async function addPreset(name: string){
+    const presetIngredients: PresetIngredient[] = ownedIngredients.map(oi => ({
+      id: oi.ingredient.id,
+      name: oi.ingredient.name,
+      quantity: oi.quantity ?? undefined,
+      expires_at: oi.expires_at ?? undefined,
+    }));
+
+    const saved = await savePreset(name, presetIngredients);
+    setPresets(prev => {
+      const existing = prev.findIndex(p => p.id === saved.id);
+      if (existing >= 0) {
+        const next = [...prev];
+        next[existing] = saved;
+        return next;
+      }
+      return [saved, ...prev];
+    });
+  }
+
+  /**
+   * populate ingredientsToAdd with a preset's ingredients
+   */
+  function applyPreset(preset: Preset){
+    const mapped: inputOption[] = preset.ingredients.map(ing => ({
+      label: ing.name,
+      value: ing.id,
+      quantity: ing.quantity,
+      expires_at: ing.expires_at,
+    }));
+    setIngredientsToAdd(mapped);
+  }
+
+  /**
+   * delete a preset by id
+   */
+  async function removePreset(id: string){
+    await deletePreset(id);
+    setPresets(prev => prev.filter(p => p.id !== id));
+  }
   
   return (
     <DashboardContext.Provider value={{
@@ -479,7 +577,15 @@ export function DashboardProvider({children}:{
       selectedOwnedIngredientId,
       setSelectedOwnedIngredientId,
       isDeletingOwnedIngredients,
-      setIsDeletingOwnedIngredients
+      setIsDeletingOwnedIngredients,
+      presets,
+      setPresets,
+      isLoadingPresets,
+      setIsLoadingPresets,
+      fetchPresets,
+      addPreset,
+      applyPreset,
+      removePreset
     }}>
       {children}
     </DashboardContext.Provider>
