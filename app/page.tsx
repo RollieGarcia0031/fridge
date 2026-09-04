@@ -72,12 +72,18 @@ function Home() {
     marketMode,
     setMarketMode,
     isLoadingResponse,
-    setSuggestedRecipes
+    setSuggestedRecipes,
+    presets,
+    fetchPresets,
+    addPreset,
+    applyPreset,
+    removePreset
   } = useDashboardContext()!;
 
   useEffect(() => {
     RefreshIngredientList();
     fetchOwnedIngredients();
+    fetchPresets();
   }, []);
 
   const options: ingredientOption[] = ingredients.map((i) => {
@@ -377,6 +383,53 @@ function Home() {
                         : "Batch-add multiple ingredients to your fridge, then save them together."}
                     </p>
                   </div>
+                  <div className="space-y-2 pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                        Presets
+                      </span>
+                      <button
+                        onClick={handleSaveAsPreset}
+                        disabled={ownedIngredients.length === 0}
+                        className="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Save as preset
+                      </button>
+                    </div>
+                    {presets.length > 0 ? (
+                      <div className="flex flex-col gap-1.5">
+                        {presets.map((preset) => (
+                          <div
+                            key={preset.id}
+                            className="flex items-center gap-2 p-2 bg-bg-subtle/50 border border-border rounded-lg group"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm font-medium truncate block">{preset.name}</span>
+                              <span className="text-[10px] text-text-muted">
+                                {preset.ingredients.length} ingredient{preset.ingredients.length !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => applyPreset(preset)}
+                              className="text-[10px] font-bold uppercase text-primary hover:text-primary/80 transition-colors px-2 py-1"
+                            >
+                              Apply
+                            </button>
+                            <button
+                              onClick={() => removePreset(preset.id)}
+                              className="text-text-muted hover:text-red-500 transition-colors shrink-0"
+                            >
+                              <IoIosCloseCircleOutline className="text-lg" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-text-muted text-center py-2">
+                        Save your fridge contents as a preset for quick access later.
+                      </p>
+                    )}
+                  </div>
                   {ingredientsToAdd.length > 0 && (
                     <div className="space-y-3 pt-4 border-t border-border/50">
                       <div className="flex items-center justify-between">
@@ -559,6 +612,18 @@ function Home() {
     sessionStorage.removeItem("instructions");
     sessionStorage.setItem("recipe", JSON.stringify(recipe));
     router.push("/recipe");
+  }
+
+  async function handleSaveAsPreset() {
+    const name = window.prompt("Preset name:");
+    if (!name) return;
+    try {
+      await addPreset(name);
+      toast.success(`Preset "${name}" saved`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save preset");
+    }
   }
 }
 
