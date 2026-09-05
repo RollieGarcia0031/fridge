@@ -89,9 +89,9 @@ Analysis date: 2026-08-16. Everything below maps to `plan.txt`. Items already im
 - [x] UI in recipe page to save/unsave; a saved recipes section in dashboard.
 
 ### 16. Dietary restrictions / preferences
-- [ ] Add user preferences for dietary restrictions (vegetarian, vegan, gluten-free, etc.).
-- [ ] Update `generateRecipeFlow` to exclude ingredients based on preferences.
-- [ ] UI settings page or modal for managing preferences.
+- [x] Add user preferences for dietary restrictions (vegetarian, vegan, gluten-free, etc.).
+- [x] Update `generateRecipeFlow` to exclude ingredients based on preferences.
+- [x] UI settings page or modal for managing preferences.
 
 ### 17. Meal planning calendar
 - [ ] Weekly/monthly view to plan which meals to cook on which days.

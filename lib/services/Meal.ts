@@ -26,6 +26,12 @@ export interface MealFilters {
    * (e.g. items queued in market mode but not yet saved to the fridge)
    */
   ingredientIds?: string[];
+  /**
+   * dietary restrictions every generated dish must respect
+   * (e.g. vegetarian, vegan, gluten-free); incompatible ingredients are
+   * excluded from the suggestions
+   */
+  dietaryRestrictions?: DietaryRestriction[];
 }
 
 export async function getRecommendedMeals(

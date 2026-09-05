@@ -6,6 +6,7 @@ import { RxReload, RxBookmark } from "react-icons/rx";
 import { TailSpin } from "react-loader-spinner";
 import { useDashboardContext } from "@/context/DashboardContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { DIETARY_RESTRICTION_LABELS } from "@/lib/ai-flow/dietary";
 
 export default function SuggestedDialog() {
   const {
@@ -16,6 +17,7 @@ export default function SuggestedDialog() {
     dishType,
     nutrientPriority,
     allowSuggestedIngredients,
+    dietaryRestrictions,
   } = useDashboardContext()!;
 
   const activeFilterLabel =
@@ -58,6 +60,13 @@ export default function SuggestedDialog() {
               {allowSuggestedIngredients && (
                 <span className="text-[10px] font-bold uppercase tracking-widest bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full">
                   Extra ingredients
+                </span>
+              )}
+              {dietaryRestrictions.length > 0 && (
+                <span className="text-[10px] font-bold uppercase tracking-widest bg-purple-500/15 text-purple-400 px-2 py-0.5 rounded-full">
+                  {dietaryRestrictions
+                    .map((r) => DIETARY_RESTRICTION_LABELS[r])
+                    .join(", ")}
                 </span>
               )}
             </h2>
