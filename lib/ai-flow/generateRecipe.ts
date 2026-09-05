@@ -1,5 +1,6 @@
 import { z } from "genkit";
 import { ai } from "./genkit";
+import { buildDietaryGuidance, filterIngredientsByDiet } from "./dietary";
 
 export const generateRecipeInputSchema = z.object({
   ingredients: z
@@ -22,6 +23,12 @@ export const generateRecipeInputSchema = z.object({
     .describe(
       "Whether the dishes may use extra ingredients beyond the given list; omit or false to restrict to the list only (default false)"
     ),
+  dietaryRestrictions: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Dietary restrictions every dish must respect (e.g. vegetarian, vegan, gluten-free, dairy-free, keto); incompatible ingredients are excluded from the dishes"
+    ),
 });
 
 export const generateRecipeOutputSchema = z.array(
@@ -43,11 +50,24 @@ const buildGenerateRecipePrompt = ({
   type,
   nutrientPriority,
   allowSuggestedIngredients,
-}: GenerateRecipeInput) => `
+  dietaryRestrictions,
+}: GenerateRecipeInput) => {
+  // never hand the model ingredients that conflict with the user's
+  // dietary restrictions, so they cannot leak into any dish
+  const allowedIngredients = filterIngredientsByDiet(ingredients, dietaryRestrictions);
+  const dietaryGuidance = buildDietaryGuidance(dietaryRestrictions);
+
+  if (allowedIngredients.length === 0) {
+    throw new Error(
+      "All available ingredients are excluded by your dietary restrictions",
+    );
+  }
+
+  return `
 You are a meal-planning assistant.
 
 Generate exactly 5 easy-to-cook dishes using ingredients from this list when possible:
-${ingredients.join(", ")}
+${allowedIngredients.join(", ")}
 
 ${
   allowSuggestedIngredients
@@ -71,8 +91,11 @@ ${
     : "There is no nutritional priority."
 }
 
+${dietaryGuidance ? `Dietary restrictions:\n${dietaryGuidance}\n` : ""}
+
 Return only JSON that matches the provided output schema.
 `;
+};
 
 /**
  * Generates five suggested recipes based on available ingredients.

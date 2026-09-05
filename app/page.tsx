@@ -6,6 +6,7 @@ import { IoIosCloseCircleOutline } from "react-icons/io";
 import { VscDebugContinue } from "react-icons/vsc";
 import { IoFlash } from "react-icons/io5";
 import SuggestedDialog, { RecipeCard } from "@/components/SuggestedDialog";
+import PreferencesDialog from "@/components/PreferencesDialog";
 import { Oval, TailSpin } from "react-loader-spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -77,13 +78,17 @@ function Home() {
     fetchPresets,
     addPreset,
     applyPreset,
-    removePreset
+    removePreset,
+    dietaryRestrictions,
+    preferencesDialogRef,
+    fetchPreferences,
   } = useDashboardContext()!;
 
   useEffect(() => {
     RefreshIngredientList();
     fetchOwnedIngredients();
     fetchPresets();
+    fetchPreferences();
   }, []);
 
   const options: ingredientOption[] = ingredients.map((i) => {
@@ -383,6 +388,25 @@ function Home() {
                         : "Batch-add multiple ingredients to your fridge, then save them together."}
                     </p>
                   </div>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => preferencesDialogRef.current?.showModal()}
+                      className="w-full flex items-center justify-between gap-2 p-3 bg-bg-subtle/50 border border-border rounded-lg hover:border-primary/40 transition-colors cursor-pointer"
+                    >
+                      <span className="text-sm font-medium text-text">
+                        Dietary preferences
+                      </span>
+                      {dietaryRestrictions.length > 0 ? (
+                        <span className="text-[10px] font-bold uppercase tracking-widest bg-accent/15 text-accent px-2 py-0.5 rounded-full">
+                          {dietaryRestrictions.length} active
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                          None set
+                        </span>
+                      )}
+                    </button>
+                  </div>
                   <div className="space-y-2 pt-2 border-t border-border/50">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
@@ -572,6 +596,7 @@ function Home() {
       </main>
 
       <SuggestedDialog />
+      <PreferencesDialog />
     </>
   );
 

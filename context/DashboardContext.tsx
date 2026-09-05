@@ -7,6 +7,7 @@ import {
 
 import { getRecommendedMeals, MealFilters } from '@/lib/services/Meal';
 import { getPresets, savePreset, deletePreset } from '@/lib/services/Presets';
+import { getPreferences, savePreferences as persistPreferences } from '@/lib/services/Preferences';
 
 /**
  * supported dish type filters for recipe suggestions
@@ -77,6 +78,33 @@ interface DashboardContextProps {
    */
   allowSuggestedIngredients: boolean;
   setAllowSuggestedIngredients: (allowSuggestedIngredients: boolean) => void;
+
+  /**
+   * active dietary restrictions every generated dish must respect
+   */
+  dietaryRestrictions: DietaryRestriction[];
+  setDietaryRestrictions: (dietaryRestrictions: DietaryRestriction[]) => void;
+
+  /**
+   * loading state for fetching the user's dietary preferences
+   */
+  isLoadingPreferences: boolean;
+  setIsLoadingPreferences: (isLoadingPreferences: boolean) => void;
+
+  /**
+   * preferences dialog for managing dietary restrictions
+   */
+  preferencesDialogRef: React.RefObject<HTMLDialogElement | null>;
+
+  /**
+   * fetch the user's persisted dietary preferences and apply them as filters
+   */
+  fetchPreferences: () => Promise<void>;
+
+  /**
+   * persist the given dietary preferences and apply them to future suggestions
+   */
+  savePreferences: (dietaryRestrictions: DietaryRestriction[]) => Promise<void>;
 
   /**
    * market mode: when enabled, suggestions regenerate live (debounced) as the
@@ -210,6 +238,18 @@ export function DashboardProvider({children}:{
   // mirrors allowSuggestedIngredients so in-flight suggestion requests can detect filter changes
   const allowSuggestedIngredientsRef = useRef<boolean>(false);
 
+  // active dietary restrictions for recipe suggestions ([] = no restrictions)
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<DietaryRestriction[]>([]);
+
+  // mirrors dietaryRestrictions so in-flight suggestion requests can detect filter changes
+  const dietaryRestrictionsRef = useRef<DietaryRestriction[]>([]);
+
+  // loading state for fetching the user's dietary preferences
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
+
+  // preferences dialog
+  const preferencesDialogRef = useRef<HTMLDialogElement | null>(null);
+
   // whether market mode (live suggestions while queueing) is enabled
   const [marketMode, setMarketMode] = useState(false);
 
@@ -279,6 +319,22 @@ export function DashboardProvider({children}:{
   }
 
   /**
+   * update the dietary restrictions and invalidate any in-flight suggestion request
+   */
+  function updateDietaryRestrictions(value: DietaryRestriction[]){
+    const next = [...new Set(value)];
+
+    if (JSON.stringify(next) === JSON.stringify(dietaryRestrictionsRef.current)){
+      return;
+    }
+
+    dietaryRestrictionsRef.current = next;
+    setDietaryRestrictions(next);
+
+    invalidateInFlightSuggestions();
+  }
+
+  /**
    * toggle market mode and invalidate any in-flight suggestion request
    */
   function updateMarketMode(value: boolean){
@@ -339,6 +395,7 @@ export function DashboardProvider({children}:{
       const requestedDishType = dishTypeRef.current;
       const requestedPriority = nutrientPriorityRef.current;
       const requestedAllowSuggested = allowSuggestedIngredientsRef.current;
+      const requestedDietaryRestrictions = [...dietaryRestrictionsRef.current];
       // in market mode the queued items count as prospective inventory
       const requestedQueuedIds = marketModeRef.current
         ? [...queuedIdsRef.current]
@@ -348,11 +405,13 @@ export function DashboardProvider({children}:{
       if (requestedDishType) filters.type = requestedDishType;
       if (requestedPriority) filters.nutrientPriority = requestedPriority;
       if (requestedAllowSuggested) filters.allowSuggestedIngredients = true;
+      if (requestedDietaryRestrictions.length > 0) filters.dietaryRestrictions = requestedDietaryRestrictions;
       if (requestedQueuedIds.length > 0) filters.ingredientIds = requestedQueuedIds;
       const hasFilters = Boolean(
         requestedDishType ||
         requestedPriority ||
         requestedAllowSuggested ||
+        requestedDietaryRestrictions.length > 0 ||
         requestedQueuedIds.length > 0
       );
 
@@ -364,6 +423,7 @@ export function DashboardProvider({children}:{
       if (requestedDishType !== dishTypeRef.current) return;
       if (requestedPriority !== nutrientPriorityRef.current) return;
       if (requestedAllowSuggested !== allowSuggestedIngredientsRef.current) return;
+      if (JSON.stringify(requestedDietaryRestrictions) !== JSON.stringify(dietaryRestrictionsRef.current)) return;
       // the market-mode queue changed while this request was pending
       if (
         marketModeRef.current &&
@@ -397,6 +457,7 @@ export function DashboardProvider({children}:{
       const requestedDishType = dishTypeRef.current;
       const requestedPriority = nutrientPriorityRef.current;
       const requestedAllowSuggested = allowSuggestedIngredientsRef.current;
+      const requestedDietaryRestrictions = [...dietaryRestrictionsRef.current];
       // in market mode the queued items count as prospective inventory
       const requestedQueuedIds = marketModeRef.current
         ? [...queuedIdsRef.current]
@@ -406,11 +467,13 @@ export function DashboardProvider({children}:{
       if (requestedDishType) filters.type = requestedDishType;
       if (requestedPriority) filters.nutrientPriority = requestedPriority;
       if (requestedAllowSuggested) filters.allowSuggestedIngredients = true;
+      if (requestedDietaryRestrictions.length > 0) filters.dietaryRestrictions = requestedDietaryRestrictions;
       if (requestedQueuedIds.length > 0) filters.ingredientIds = requestedQueuedIds;
       const hasFilters = Boolean(
         requestedDishType ||
         requestedPriority ||
         requestedAllowSuggested ||
+        requestedDietaryRestrictions.length > 0 ||
         requestedQueuedIds.length > 0
       );
 
@@ -422,6 +485,7 @@ export function DashboardProvider({children}:{
       if (requestedDishType !== dishTypeRef.current) return null;
       if (requestedPriority !== nutrientPriorityRef.current) return null;
       if (requestedAllowSuggested !== allowSuggestedIngredientsRef.current) return null;
+      if (JSON.stringify(requestedDietaryRestrictions) !== JSON.stringify(dietaryRestrictionsRef.current)) return null;
       // the market-mode queue changed while this request was pending
       if (
         marketModeRef.current &&
@@ -454,7 +518,7 @@ export function DashboardProvider({children}:{
 
     const timer = setTimeout(() => refreshRecommendedRecipesRef.current(), justEnabled ? 0 : 500);
     return () => clearTimeout(timer);
-  }, [marketMode, ingredientsToAdd, dishType, nutrientPriority, allowSuggestedIngredients]);
+  }, [marketMode, ingredientsToAdd, dishType, nutrientPriority, allowSuggestedIngredients, dietaryRestrictions]);
 
   /**
    * fetch the owned ingredients of logged user
@@ -480,6 +544,31 @@ export function DashboardProvider({children}:{
   async function RefreshIngredientList(){
     const data = await getAllIngredients();
     setIngredients(data);
+  }
+
+  /**
+   * fetch the user's persisted dietary preferences and apply them as filters
+   */
+  async function fetchPreferences(){
+    try {
+      setIsLoadingPreferences(true);
+      const data = await getPreferences();
+      updateDietaryRestrictions(data.dietary_restrictions);
+    } catch (error){
+      console.error(error);
+    } finally {
+      setIsLoadingPreferences(false);
+    }
+  }
+
+  /**
+   * persist the given dietary preferences and apply them to future suggestions
+   */
+  async function savePreferences(dietaryRestrictions: DietaryRestriction[]){
+    const saved = await persistPreferences(dietaryRestrictions);
+    updateDietaryRestrictions(saved.dietary_restrictions);
+    // drop stale suggestions so the next generation respects the new restrictions
+    setSuggestedRecipes([]);
   }
 
   /**
@@ -562,6 +651,13 @@ export function DashboardProvider({children}:{
       setNutrientPriority: updateNutrientPriority,
       allowSuggestedIngredients,
       setAllowSuggestedIngredients: updateAllowSuggestedIngredients,
+      dietaryRestrictions,
+      setDietaryRestrictions: updateDietaryRestrictions,
+      isLoadingPreferences,
+      setIsLoadingPreferences,
+      preferencesDialogRef,
+      fetchPreferences,
+      savePreferences,
       marketMode,
       setMarketMode: updateMarketMode,
       refreshRecommendedRecipes,

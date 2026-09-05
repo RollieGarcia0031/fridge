@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
  *   Headers: 
  *     Authorization: Bearer <Supabase token>
  *   Body (optional):
- *     { "type": "soup" | "stir-fried", "nutrientPriority": "muscle" | "bone" | "sick", "allowSuggestedIngredients": boolean, "ingredientIds": string[] }
+ *     { "type": "soup" | "stir-fried", "nutrientPriority": "muscle" | "bone" | "sick", "allowSuggestedIngredients": boolean, "ingredientIds": string[], "dietaryRestrictions": string[] }
  *
  * note:
  *   ingredientIds are merged with the user's owned inventory (e.g. items queued
@@ -48,6 +48,8 @@ export async function POST(req: Request){
     let allowSuggestedIngredients: boolean | undefined;
     // optional ingredient ids to consider alongside the user's inventory (market mode queue)
     let ingredientIds: string[] | undefined;
+    // optional dietary restrictions every dish must respect; ignored when absent/invalid
+    let dietaryRestrictions: string[] | undefined;
     try {
       const body = await req.json();
       if (body?.type === "soup" || body?.type === "stir-fried")
@@ -64,6 +66,11 @@ export async function POST(req: Request){
         ingredientIds = body.ingredientIds.filter(
           (id: unknown): id is string => typeof id === "string" && id.length > 0,
         );
+      if (Array.isArray(body?.dietaryRestrictions))
+        dietaryRestrictions = body.dietaryRestrictions.filter(
+          (restriction: unknown): restriction is string =>
+            typeof restriction === "string" && restriction.length > 0,
+        );
     } catch {
       // no body provided — keep filter unset
     }
@@ -78,7 +85,7 @@ export async function POST(req: Request){
       ingredients.push(...queuedNames);
     }
 
-    const result = await generateRecipeFlow({ingredients, type, nutrientPriority, allowSuggestedIngredients});
+    const result = await generateRecipeFlow({ingredients, type, nutrientPriority, allowSuggestedIngredients, dietaryRestrictions});
 
     return new NextResponse(JSON.stringify(result),{
       status: 200
